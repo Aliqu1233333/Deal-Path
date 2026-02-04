@@ -7,30 +7,27 @@
   <style>
     :root{
       /* === Palette === */
-      --done-bg: #e5e5e5;       /* COMPLETED stage */
+      --done-bg: #e5e5e5;     /* official completed */
       --done-fg: #6b6b6b;
 
       --active-bg: #17345b;
       --active-fg: #ffffff;
 
-      /* IMPORTANT: make "not completed yet" a different grey so you can see the difference */
-      --todo-bg: #d9d9d9;       /* UPDATED (was too close to #e5e5e5) */
+      /* keep todo different so "done" is obvious */
+      --todo-bg: #d9d9d9;
       --todo-fg: #6f6f6f;
 
-      /* === Sizing === */
       --track-h: 40px;
       --cut: 22px;
       --radius: 20px;
 
-      /* UPDATED: gaps much smaller */
-      --gap: 0.5px;             /* smaller than before; visually tight */
+      /* very tight seams */
+      --gap: 0.5px;
 
-      /* Layout */
       --embed-pad-y: 18px;
       --embed-pad-x: 12px;
       --offset-down: 6px;
 
-      /* Toast */
       --toast-bg: #bff3ea;
       --toast-fg: #0d3a33;
       --toast-shadow: 0 10px 30px rgba(0,0,0,0.10);
@@ -103,11 +100,7 @@
         var(--cut) 50%
       );
 
-      /* Gap handling:
-         Each segment overlaps the previous one by a tiny amount (negative margin).
-         Smaller value => smaller visible seam. */
       margin-left: calc(var(--gap) * -1);
-
       transition: transform 160ms ease, filter 160ms ease;
     }
 
@@ -138,18 +131,23 @@
       );
     }
 
-    /* STATES (FIXED): ensure done uses #e5e5e5 and todo uses different grey */
-    .stage[data-state="done"]{ background: var(--done-bg); color: var(--done-fg); }
+    /* States */
     .stage[data-state="active"]{ background: var(--active-bg); color: var(--active-fg); }
     .stage[data-state="todo"]{ background: var(--todo-bg); color: var(--todo-fg); }
 
-    /* Subtle border - keep extremely light so it doesn't look like a gap */
+    /* IMPORTANT: force completed stages to #e5e5e5 (wins embed CSS) */
+    .deal-path .stage[data-state="done"]{
+      background: #e5e5e5 !important;
+      color: #6b6b6b !important;
+    }
+
+    /* ultra subtle border so seams don't read as gaps */
     .stage::before{
       content:"";
       position:absolute;
       inset:0;
       pointer-events:none;
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.02);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.01);
     }
     .stage[data-state="active"]::before{
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.10);
@@ -165,7 +163,7 @@
       flex: 0 0 auto;
       background: rgba(255,255,255,0.60);
       box-shadow: inset 0 0 0 2px rgba(0,0,0,0.06);
-      transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+      transition: background 160ms ease, box-shadow 160ms ease;
     }
     .stage[data-state="active"] .chk{
       background: rgba(255,255,255,0.20);
@@ -209,18 +207,16 @@
       transform: translateX(-50%) translateY(0px);
     }
 
-    /* CTA button (label updated) */
+    /* CTA */
     .cta{
       height: 34px;
       padding: 0 12px;
       border-radius: 17px;
       border: 0;
       cursor:pointer;
-
       font-size: 12px;
       font-weight: 700;
       letter-spacing: .1px;
-
       color: #fff;
       background: #1d63ff;
       display:flex;
@@ -233,7 +229,6 @@
       position: relative;
       overflow:hidden;
     }
-
     .cta:hover{
       filter: brightness(1.03);
       box-shadow: 0 10px 26px rgba(29,99,255,0.24);
@@ -243,7 +238,6 @@
       transform: translateY(1px);
       box-shadow: 0 6px 16px rgba(29,99,255,0.14);
     }
-
     .cta::before{
       content:"";
       position:absolute;
@@ -267,7 +261,6 @@
       70%  { transform: scale(0.995); }
       100% { transform: scale(1); }
     }
-
     .shimmer{
       position:absolute;
       inset: -6px -10px;
@@ -422,7 +415,8 @@
         btn.setAttribute("aria-selected", String(i === activeIndex));
         btn.dataset.stage = s.key;
 
-        const state = i < activeIndex ? "done" : (i === activeIndex ? "active" : "todo");
+        // FIX: done applies to ALL indices before activeIndex
+        const state = (i < activeIndex) ? "done" : (i === activeIndex ? "active" : "todo");
         btn.dataset.state = state;
 
         const tooltipText = s.label && s.label.trim().length ? s.label : "Started";
