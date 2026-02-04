@@ -6,53 +6,56 @@
   <title>Deal Path</title>
   <style>
     :root{
-      /* === Palette sampled from your screenshot === */
+      /* === Palette (same as before) === */
       --bg-page: #f3f3f3;
 
-      --done-bg: #d3edea;     /* pale mint */
-      --done-fg: #0ba79c;     /* teal text */
-      --done-accent: #06a59a; /* teal accent */
+      --done-bg: #d3edea;
+      --done-fg: #0ba79c;
+      --done-accent: #06a59a;
 
-      --active-bg: #17345b;   /* deep navy */
+      --active-bg: #17345b;
       --active-fg: #ffffff;
 
-      --todo-bg: #e6e6e6;     /* light gray segment */
-      --todo-fg: #6f6f6f;     /* gray text */
+      --todo-bg: #e6e6e6;
+      --todo-fg: #6f6f6f;
 
-      --track-h: 22px;
-      --cut: 18px;            /* chevron point width */
-      --gap: 0px;
-      --radius: 11px;
+      /* === SIZING (UPDATED) === */
+      --track-h: 40px;         /* was 22px -> bigger */
+      --cut: 22px;             /* slightly larger point so it scales cleanly */
+      --radius: 20px;
+
+      /* === GAP CONTROL (UPDATED) ===
+         This is the “space” between stages. Lower = tighter.
+         Your embed shows it too large; set this to 2px (was effectively larger). */
+      --gap: 2px;
+
       --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
 
     html,body{height:100%;}
     body{
       margin:0;
-      background: var(--bg-page);
+      background: transparent; /* IMPORTANT for embeds */
       font-family: var(--font);
-      display:flex;
-      align-items:flex-start;
-      justify-content:center;
-      padding: 14px;
+      padding: 10px 12px;
     }
 
+    /* Make it fill the embed width and feel “top bar” sized */
     .wrap{
-      width: min(1200px, 98vw);
+      width: 100%;
       display:flex;
       align-items:center;
-      gap: 12px;
+      justify-content:space-between;
+      gap: 14px;
     }
 
-    /* Progress track */
     .deal-path{
-      flex: 1;
+      flex: 1 1 auto;
       display:flex;
       height: var(--track-h);
       user-select:none;
       overflow:hidden;
       border-radius: var(--radius);
-      background: transparent;
     }
 
     .stage{
@@ -61,15 +64,19 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      font-size: 11px;
-      font-weight: 600;
+
+      font-size: 13px;     /* bigger text */
+      font-weight: 700;
       letter-spacing: .1px;
+
       cursor:pointer;
       outline: none;
       border: 0;
-      padding: 0 10px 0 10px;
+      padding: 0 14px;
+
       background: var(--todo-bg);
       color: var(--todo-fg);
+
       /* Chevron */
       clip-path: polygon(
         0 0,
@@ -79,10 +86,13 @@
         0 100%,
         var(--cut) 50%
       );
+
+      /* === GAP (UPDATED) ===
+         We create the “gap” by pulling segments left and leaving a small margin.
+         Smaller magnitude = smaller visible gap. */
       margin-left: calc(var(--gap) * -1);
     }
 
-    /* First & last need clean ends (rounded container handles it, but clip-path needs help) */
     .stage:first-child{
       clip-path: polygon(
         0 0,
@@ -93,8 +103,8 @@
       );
       margin-left: 0;
       justify-content:flex-start;
-      padding-left: 10px;
-      gap: 8px;
+      padding-left: 12px;
+      gap: 10px;
     }
 
     .stage:last-child{
@@ -107,39 +117,28 @@
       );
     }
 
-    /* States */
-    .stage[data-state="done"]{
-      background: var(--done-bg);
-      color: var(--done-fg);
-    }
-    .stage[data-state="active"]{
-      background: var(--active-bg);
-      color: var(--active-fg);
-    }
-    .stage[data-state="todo"]{
-      background: var(--todo-bg);
-      color: var(--todo-fg);
-    }
+    .stage[data-state="done"]{ background: var(--done-bg); color: var(--done-fg); }
+    .stage[data-state="active"]{ background: var(--active-bg); color: var(--active-fg); }
+    .stage[data-state="todo"]{ background: var(--todo-bg); color: var(--todo-fg); }
 
-    /* Subtle separators like your screenshot */
+    /* subtle borders */
     .stage::before{
       content:"";
       position:absolute;
       inset:0;
-      background: transparent;
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.03);
       pointer-events:none;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.03);
     }
     .stage[data-state="active"]::before{
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.10);
     }
 
-    /* Check icon pill (first segment) */
+    /* Bigger check pill to match new height */
     .check{
-      width: 18px;
-      height: 18px;
-      border-radius: 9px;
-      background: #bfe7e3; /* slightly deeper mint */
+      width: 22px;
+      height: 22px;
+      border-radius: 11px;
+      background: #bfe7e3;
       display:grid;
       place-items:center;
       flex: 0 0 auto;
@@ -147,25 +146,31 @@
     }
     .check svg{display:block}
 
-    /* Optional “Mark Status as Complete” button (matches screenshot vibe) */
+    /* CTA button scaled to match bar */
     .cta{
-      height: 26px;
-      padding: 0 12px;
-      border-radius: 13px;
+      height: 34px;         /* was 26px -> bigger */
+      padding: 0 14px;
+      border-radius: 17px;
       border: 0;
       cursor:pointer;
-      font-size: 11px;
-      font-weight: 700;
+      font-size: 12px;
+      font-weight: 800;
       color: #fff;
-      background: #1d63ff; /* the blue button in your screenshot */
+      background: #1d63ff;
       display:flex;
       align-items:center;
       gap: 8px;
       box-shadow: 0 1px 0 rgba(0,0,0,0.08);
       white-space:nowrap;
+      flex: 0 0 auto;
     }
     .cta:active{transform: translateY(1px);}
-    .cta svg{display:block}
+
+    /* Optional: if the embed container is narrow, let the button wrap below */
+    @media (max-width: 820px){
+      .wrap{flex-wrap:wrap;}
+      .cta{margin-left:auto;}
+    }
   </style>
 </head>
 
@@ -174,29 +179,26 @@
     <div id="dealPath" class="deal-path" role="tablist" aria-label="Deal stages"></div>
 
     <button class="cta" id="completeBtn" type="button" title="Mark current status as complete">
-      <span>Mark Status as Complete</span>
+      Mark Status as Complete
     </button>
   </div>
 
   <script>
-    // === Configure your stages here ===
     const STAGES = [
-      { key: "new",        label: "" },            // first mint segment in your screenshot
+      { key: "new",        label: "" },
       { key: "contacted",  label: "Contacted" },
       { key: "nurturing",  label: "Nurturing" },
       { key: "unqualified",label: "Unqualified" },
       { key: "converted",  label: "Converted" }
     ];
 
-    // 0 = first segment active by default
-    let activeIndex = 1; // screenshot shows "Contacted" active
+    let activeIndex = 1; // Contacted
 
     const el = document.getElementById("dealPath");
     const completeBtn = document.getElementById("completeBtn");
 
     function render(){
       el.innerHTML = "";
-
       STAGES.forEach((s, i) => {
         const btn = document.createElement("button");
         btn.type = "button";
@@ -205,22 +207,19 @@
         btn.setAttribute("aria-selected", String(i === activeIndex));
         btn.dataset.stage = s.key;
 
-        // done = before active, active = current, todo = after
         const state = i < activeIndex ? "done" : (i === activeIndex ? "active" : "todo");
         btn.dataset.state = state;
 
-        // first segment has check icon like your screenshot
         if(i === 0){
           const check = document.createElement("span");
           check.className = "check";
           check.innerHTML = `
-            <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="#06a59a" d="M9.0 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
             </svg>
           `;
           btn.appendChild(check);
 
-          // first segment has no label in screenshot
           const span = document.createElement("span");
           span.textContent = s.label || "";
           btn.appendChild(span);
@@ -228,10 +227,7 @@
           btn.textContent = s.label;
         }
 
-        btn.addEventListener("click", () => {
-          setActive(i);
-        });
-
+        btn.addEventListener("click", () => setActive(i));
         el.appendChild(btn);
       });
     }
@@ -239,8 +235,6 @@
     function setActive(i){
       activeIndex = i;
       render();
-
-      // Dispatch an event so Monday/your embed can listen (optional)
       window.dispatchEvent(new CustomEvent("dealStageChanged", {
         detail: {
           activeIndex,
@@ -251,16 +245,11 @@
     }
 
     completeBtn.addEventListener("click", () => {
-      // Example behavior: move to next stage when "complete" is clicked
-      if(activeIndex < STAGES.length - 1){
-        setActive(activeIndex + 1);
-      }
+      if(activeIndex < STAGES.length - 1) setActive(activeIndex + 1);
     });
 
-    // Initial render
     render();
 
-    // Expose a tiny API if you want to control it from outside the iframe
     window.DealPath = {
       setStageByKey(key){
         const idx = STAGES.findIndex(s => s.key === key);
