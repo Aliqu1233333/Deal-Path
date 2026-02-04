@@ -135,9 +135,9 @@
     .stage[data-state="active"]{ background: var(--active-bg); color: var(--active-fg); }
     .stage[data-state="todo"]{ background: var(--todo-bg); color: var(--todo-fg); }
 
-    /* IMPORTANT: force completed stages to #e5e5e5 (wins embed CSS) */
+    /* IMPORTANT: force completed stages to #acf3e4 (wins embed CSS) */
     .deal-path .stage[data-state="done"]{
-      background: #e5e5e5 !important;
+      background: #acf3e4 !important;
       color: #6b6b6b !important;
     }
 
@@ -415,7 +415,6 @@
         btn.setAttribute("aria-selected", String(i === activeIndex));
         btn.dataset.stage = s.key;
 
-        // FIX: done applies to ALL indices before activeIndex
         const state = (i < activeIndex) ? "done" : (i === activeIndex ? "active" : "todo");
         btn.dataset.state = state;
 
