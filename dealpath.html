@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Deal Path</title>
+  <style>
+    :root{
+      /* === Palette sampled from your screenshot === */
+      --bg-page: #f3f3f3;
+
+      --done-bg: #d3edea;     /* pale mint */
+      --done-fg: #0ba79c;     /* teal text */
+      --done-accent: #06a59a; /* teal accent */
+
+      --active-bg: #17345b;   /* deep navy */
+      --active-fg: #ffffff;
+
+      --todo-bg: #e6e6e6;     /* light gray segment */
+      --todo-fg: #6f6f6f;     /* gray text */
+
+      --track-h: 22px;
+      --cut: 18px;            /* chevron point width */
+      --gap: 0px;
+      --radius: 11px;
+      --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    html,body{height:100%;}
+    body{
+      margin:0;
+      background: var(--bg-page);
+      font-family: var(--font);
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding: 14px;
+    }
+
+    .wrap{
+      width: min(1200px, 98vw);
+      display:flex;
+      align-items:center;
+      gap: 12px;
+    }
+
+    /* Progress track */
+    .deal-path{
+      flex: 1;
+      display:flex;
+      height: var(--track-h);
+      user-select:none;
+      overflow:hidden;
+      border-radius: var(--radius);
+      background: transparent;
+    }
+
+    .stage{
+      position:relative;
+      flex: 1 1 0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .1px;
+      cursor:pointer;
+      outline: none;
+      border: 0;
+      padding: 0 10px 0 10px;
+      background: var(--todo-bg);
+      color: var(--todo-fg);
+      /* Chevron */
+      clip-path: polygon(
+        0 0,
+        calc(100% - var(--cut)) 0,
+        100% 50%,
+        calc(100% - var(--cut)) 100%,
+        0 100%,
+        var(--cut) 50%
+      );
+      margin-left: calc(var(--gap) * -1);
+    }
+
+    /* First & last need clean ends (rounded container handles it, but clip-path needs help) */
+    .stage:first-child{
+      clip-path: polygon(
+        0 0,
+        calc(100% - var(--cut)) 0,
+        100% 50%,
+        calc(100% - var(--cut)) 100%,
+        0 100%
+      );
+      margin-left: 0;
+      justify-content:flex-start;
+      padding-left: 10px;
+      gap: 8px;
+    }
+
+    .stage:last-child{
+      clip-path: polygon(
+        0 0,
+        100% 0,
+        100% 100%,
+        0 100%,
+        var(--cut) 50%
+      );
+    }
+
+    /* States */
+    .stage[data-state="done"]{
+      background: var(--done-bg);
+      color: var(--done-fg);
+    }
+    .stage[data-state="active"]{
+      background: var(--active-bg);
+      color: var(--active-fg);
+    }
+    .stage[data-state="todo"]{
+      background: var(--todo-bg);
+      color: var(--todo-fg);
+    }
+
+    /* Subtle separators like your screenshot */
+    .stage::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: transparent;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.03);
+      pointer-events:none;
+    }
+    .stage[data-state="active"]::before{
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+    }
+
+    /* Check icon pill (first segment) */
+    .check{
+      width: 18px;
+      height: 18px;
+      border-radius: 9px;
+      background: #bfe7e3; /* slightly deeper mint */
+      display:grid;
+      place-items:center;
+      flex: 0 0 auto;
+      box-shadow: inset 0 0 0 2px rgba(6,165,154,0.15);
+    }
+    .check svg{display:block}
+
+    /* Optional “Mark Status as Complete” button (matches screenshot vibe) */
+    .cta{
+      height: 26px;
+      padding: 0 12px;
+      border-radius: 13px;
+      border: 0;
+      cursor:pointer;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      background: #1d63ff; /* the blue button in your screenshot */
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+      white-space:nowrap;
+    }
+    .cta:active{transform: translateY(1px);}
+    .cta svg{display:block}
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div id="dealPath" class="deal-path" role="tablist" aria-label="Deal stages"></div>
+
+    <button class="cta" id="completeBtn" type="button" title="Mark current status as complete">
+      <span>Mark Status as Complete</span>
+    </button>
+  </div>
+
+  <script>
+    // === Configure your stages here ===
+    const STAGES = [
+      { key: "new",        label: "" },            // first mint segment in your screenshot
+      { key: "contacted",  label: "Contacted" },
+      { key: "nurturing",  label: "Nurturing" },
+      { key: "unqualified",label: "Unqualified" },
+      { key: "converted",  label: "Converted" }
+    ];
+
+    // 0 = first segment active by default
+    let activeIndex = 1; // screenshot shows "Contacted" active
+
+    const el = document.getElementById("dealPath");
+    const completeBtn = document.getElementById("completeBtn");
+
+    function render(){
+      el.innerHTML = "";
+
+      STAGES.forEach((s, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "stage";
+        btn.setAttribute("role", "tab");
+        btn.setAttribute("aria-selected", String(i === activeIndex));
+        btn.dataset.stage = s.key;
+
+        // done = before active, active = current, todo = after
+        const state = i < activeIndex ? "done" : (i === activeIndex ? "active" : "todo");
+        btn.dataset.state = state;
+
+        // first segment has check icon like your screenshot
+        if(i === 0){
+          const check = document.createElement("span");
+          check.className = "check";
+          check.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#06a59a" d="M9.0 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
+            </svg>
+          `;
+          btn.appendChild(check);
+
+          // first segment has no label in screenshot
+          const span = document.createElement("span");
+          span.textContent = s.label || "";
+          btn.appendChild(span);
+        } else {
+          btn.textContent = s.label;
+        }
+
+        btn.addEventListener("click", () => {
+          setActive(i);
+        });
+
+        el.appendChild(btn);
+      });
+    }
+
+    function setActive(i){
+      activeIndex = i;
+      render();
+
+      // Dispatch an event so Monday/your embed can listen (optional)
+      window.dispatchEvent(new CustomEvent("dealStageChanged", {
+        detail: {
+          activeIndex,
+          stageKey: STAGES[activeIndex].key,
+          stageLabel: STAGES[activeIndex].label
+        }
+      }));
+    }
+
+    completeBtn.addEventListener("click", () => {
+      // Example behavior: move to next stage when "complete" is clicked
+      if(activeIndex < STAGES.length - 1){
+        setActive(activeIndex + 1);
+      }
+    });
+
+    // Initial render
+    render();
+
+    // Expose a tiny API if you want to control it from outside the iframe
+    window.DealPath = {
+      setStageByKey(key){
+        const idx = STAGES.findIndex(s => s.key === key);
+        if(idx >= 0) setActive(idx);
+      },
+      getActive(){
+        return { activeIndex, ...STAGES[activeIndex] };
+      }
+    };
+  </script>
+</body>
+</html>
