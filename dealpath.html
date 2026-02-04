@@ -22,7 +22,7 @@
       --radius: 20px;
 
       /* very tight seams */
-      --gap: 0.25px;
+      --gap: 0.15px;
 
       --embed-pad-y: 18px;
       --embed-pad-x: 12px;
@@ -135,10 +135,10 @@
     .stage[data-state="active"]{ background: var(--active-bg); color: var(--active-fg); }
     .stage[data-state="todo"]{ background: var(--todo-bg); color: var(--todo-fg); }
 
-    /* IMPORTANT: force completed stages to #acf3e4 (wins embed CSS) */
+    /* Completed stages now match SF dark blue (same as active) */
     .deal-path .stage[data-state="done"]{
-      background: #acf3e4 !important;
-      color: #6b6b6b !important;
+      background: var(--active-bg) !important;
+      color: var(--active-fg) !important;
     }
 
     /* ultra subtle border so seams don't read as gaps */
@@ -363,14 +363,15 @@
 
   <script>
     const STAGES = [
-      { key: "new",        label: "" },
-      { key: "contacted",  label: "Contacted" },
-      { key: "nurturing",  label: "Nurturing" },
-      { key: "unqualified",label: "Unqualified" },
-      { key: "converted",  label: "Converted" }
+      { key: "discovery",            label: "Discovery" },
+      { key: "dial_na",              label: "Dial NA" },
+      { key: "contacted_nurture",    label: "Contacted/Nuture" },
+      { key: "interested_selling",   label: "Interested in Selling" },
+      { key: "negotiation_review",   label: "Negotiation/Review" },
+      { key: "closed",               label: "Closed" }
     ];
 
-    let activeIndex = 1;
+    let activeIndex = 0; // starts on Discovery
 
     const el = document.getElementById("dealPath");
     const completeBtn = document.getElementById("completeBtn");
@@ -431,7 +432,7 @@
         labelWrap.appendChild(chk);
 
         const text = document.createElement("span");
-        text.textContent = (i === 0) ? "" : s.label;
+        text.textContent = s.label; // show label for stage 1 as well
         labelWrap.appendChild(text);
 
         btn.appendChild(labelWrap);
