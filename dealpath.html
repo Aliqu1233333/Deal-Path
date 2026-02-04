@@ -6,9 +6,7 @@
   <title>Deal Path</title>
   <style>
     :root{
-      /* === Palette (same as before) === */
-      --bg-page: #f3f3f3;
-
+      /* === Palette (same) === */
       --done-bg: #d3edea;
       --done-fg: #0ba79c;
       --done-accent: #06a59a;
@@ -19,15 +17,23 @@
       --todo-bg: #e6e6e6;
       --todo-fg: #6f6f6f;
 
-      /* === SIZING (UPDATED) === */
-      --track-h: 40px;         /* was 22px -> bigger */
-      --cut: 22px;             /* slightly larger point so it scales cleanly */
+      /* === Sizing === */
+      --track-h: 40px;
+      --cut: 22px;
       --radius: 20px;
 
-      /* === GAP CONTROL (UPDATED) ===
-         This is the “space” between stages. Lower = tighter.
-         Your embed shows it too large; set this to 2px (was effectively larger). */
+      /* Reduced gaps */
       --gap: 2px;
+
+      /* Layout (center it in embed) */
+      --embed-pad-y: 18px;  /* vertical breathing room */
+      --embed-pad-x: 12px;
+
+      /* Toast */
+      --toast-bg: #bff3ea;     /* close to Salesforce success green */
+      --toast-fg: #0d3a33;
+      --toast-shadow: 0 10px 30px rgba(0,0,0,0.10);
+      --toast-radius: 10px;
 
       --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
@@ -35,12 +41,20 @@
     html,body{height:100%;}
     body{
       margin:0;
-      background: transparent; /* IMPORTANT for embeds */
+      background: transparent; /* embed-friendly */
       font-family: var(--font);
-      padding: 10px 12px;
+      padding: var(--embed-pad-y) var(--embed-pad-x);
+      box-sizing: border-box;
     }
 
-    /* Make it fill the embed width and feel “top bar” sized */
+    /* Center vertically a bit (not pinned to top) */
+    .frame{
+      min-height: 92px; /* ensures it sits visually centered in the embed header area */
+      display:flex;
+      align-items:center; /* vertical centering */
+      justify-content:center;
+    }
+
     .wrap{
       width: 100%;
       display:flex;
@@ -65,8 +79,8 @@
       align-items:center;
       justify-content:center;
 
-      font-size: 13px;     /* bigger text */
-      font-weight: 700;
+      font-size: 13px;
+      font-weight: 750;
       letter-spacing: .1px;
 
       cursor:pointer;
@@ -77,7 +91,6 @@
       background: var(--todo-bg);
       color: var(--todo-fg);
 
-      /* Chevron */
       clip-path: polygon(
         0 0,
         calc(100% - var(--cut)) 0,
@@ -87,10 +100,16 @@
         var(--cut) 50%
       );
 
-      /* === GAP (UPDATED) ===
-         We create the “gap” by pulling segments left and leaving a small margin.
-         Smaller magnitude = smaller visible gap. */
       margin-left: calc(var(--gap) * -1);
+      transition: transform 160ms ease, filter 160ms ease;
+    }
+
+    .stage:hover{
+      filter: brightness(0.985);
+    }
+
+    .stage:active{
+      transform: translateY(1px);
     }
 
     .stage:first-child{
@@ -121,7 +140,6 @@
     .stage[data-state="active"]{ background: var(--active-bg); color: var(--active-fg); }
     .stage[data-state="todo"]{ background: var(--todo-bg); color: var(--todo-fg); }
 
-    /* subtle borders */
     .stage::before{
       content:"";
       position:absolute;
@@ -133,40 +151,169 @@
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.10);
     }
 
-    /* Bigger check pill to match new height */
-    .check{
-      width: 22px;
-      height: 22px;
-      border-radius: 11px;
-      background: #bfe7e3;
+    /* === Check icon on EVERY stage (new) === */
+    .chk{
+      width: 20px;
+      height: 20px;
+      border-radius: 10px;
       display:grid;
       place-items:center;
       flex: 0 0 auto;
-      box-shadow: inset 0 0 0 2px rgba(6,165,154,0.15);
+      background: rgba(255,255,255,0.60);
+      box-shadow: inset 0 0 0 2px rgba(0,0,0,0.06);
+      transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
     }
-    .check svg{display:block}
 
-    /* CTA button scaled to match bar */
+    .stage[data-state="active"] .chk{
+      background: rgba(255,255,255,0.20);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.18);
+    }
+
+    .stage[data-state="done"] .chk{
+      background: rgba(255,255,255,0.80);
+      box-shadow: inset 0 0 0 2px rgba(6,165,154,0.18);
+    }
+
+    .chk svg{display:block}
+
+    .label{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Tooltip on hover showing stage name (new) */
+    .stage[data-haslabel="true"]::after{
+      content: attr(data-tooltip);
+      position:absolute;
+      left: 50%;
+      bottom: calc(100% + 10px);
+      transform: translateX(-50%) translateY(6px);
+      opacity: 0;
+      pointer-events: none;
+      white-space: nowrap;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(17,17,17,0.92);
+      color: #fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+      transition: opacity 140ms ease, transform 140ms ease;
+    }
+
+    .stage:hover::after{
+      opacity: 1;
+      transform: translateX(-50%) translateY(0px);
+    }
+
+    /* === CTA button more interactive (new) === */
     .cta{
-      height: 34px;         /* was 26px -> bigger */
+      height: 34px;
       padding: 0 14px;
       border-radius: 17px;
       border: 0;
       cursor:pointer;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 850;
       color: #fff;
       background: #1d63ff;
       display:flex;
       align-items:center;
       gap: 8px;
-      box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+      box-shadow: 0 6px 16px rgba(29,99,255,0.22);
       white-space:nowrap;
       flex: 0 0 auto;
+      transition: transform 160ms ease, filter 160ms ease, box-shadow 160ms ease;
+      position: relative;
+      overflow:hidden;
     }
-    .cta:active{transform: translateY(1px);}
 
-    /* Optional: if the embed container is narrow, let the button wrap below */
+    .cta:hover{
+      filter: brightness(1.03);
+      box-shadow: 0 10px 26px rgba(29,99,255,0.28);
+      transform: translateY(-1px);
+    }
+    .cta:active{
+      transform: translateY(1px);
+      box-shadow: 0 6px 16px rgba(29,99,255,0.18);
+    }
+
+    /* little “shine” on hover */
+    .cta::before{
+      content:"";
+      position:absolute;
+      top: -60%;
+      left: -30%;
+      width: 50%;
+      height: 220%;
+      background: rgba(255,255,255,0.22);
+      transform: rotate(18deg) translateX(-120%);
+      transition: transform 420ms ease;
+    }
+    .cta:hover::before{
+      transform: rotate(18deg) translateX(260%);
+    }
+
+    .cta svg{display:block}
+
+    /* Stage transition “pulse” (new) */
+    .pulse{
+      animation: pulse 320ms ease;
+    }
+    @keyframes pulse{
+      0%{transform: scale(1);}
+      35%{transform: scale(1.012);}
+      100%{transform: scale(1);}
+    }
+
+    /* Salesforce-like toast (new) */
+    .toast{
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-10px);
+      opacity: 0;
+      pointer-events:none;
+      background: var(--toast-bg);
+      color: var(--toast-fg);
+      border-radius: var(--toast-radius);
+      box-shadow: var(--toast-shadow);
+      padding: 10px 12px;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 320px;
+      max-width: min(520px, calc(100vw - 24px));
+      z-index: 99999;
+      transition: opacity 200ms ease, transform 200ms ease;
+    }
+    .toast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(0px);
+      pointer-events:auto;
+    }
+    .toast .msg{
+      font-weight: 750;
+      font-size: 13px;
+      flex:1;
+    }
+    .toast .x{
+      border:0;
+      background: transparent;
+      cursor:pointer;
+      width: 26px;
+      height: 26px;
+      display:grid;
+      place-items:center;
+      border-radius: 7px;
+      transition: background 120ms ease;
+    }
+    .toast .x:hover{ background: rgba(0,0,0,0.06); }
+
     @media (max-width: 820px){
       .wrap{flex-wrap:wrap;}
       .cta{margin-left:auto;}
@@ -175,15 +322,34 @@
 </head>
 
 <body>
-  <div class="wrap">
-    <div id="dealPath" class="deal-path" role="tablist" aria-label="Deal stages"></div>
+  <div class="frame">
+    <div class="wrap" id="root">
+      <div id="dealPath" class="deal-path" role="tablist" aria-label="Deal stages"></div>
 
-    <button class="cta" id="completeBtn" type="button" title="Mark current status as complete">
-      Mark Status as Complete
+      <button class="cta" id="completeBtn" type="button" title="Move to next stage">
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="white" d="M9 16.2 4.8 12 3.4 13.4 9 19l12-12-1.4-1.4z"/>
+        </svg>
+        Mark Lead as Complete
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="#0ba79c" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1 14-4-4 1.4-1.4L11 12.2l5.6-5.6L18 8l-7 8Z"/>
+    </svg>
+    <div class="msg" id="toastMsg">Status changed successfully.</div>
+    <button class="x" id="toastClose" type="button" aria-label="Dismiss">
+      <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="#0d3a33" d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3z"/>
+      </svg>
     </button>
   </div>
 
   <script>
+    // ===== Configure stages here =====
     const STAGES = [
       { key: "new",        label: "" },
       { key: "contacted",  label: "Contacted" },
@@ -193,9 +359,39 @@
     ];
 
     let activeIndex = 1; // Contacted
-
     const el = document.getElementById("dealPath");
     const completeBtn = document.getElementById("completeBtn");
+    const root = document.getElementById("root");
+
+    const toast = document.getElementById("toast");
+    const toastMsg = document.getElementById("toastMsg");
+    const toastClose = document.getElementById("toastClose");
+    let toastTimer = null;
+
+    function showToast(message){
+      toastMsg.textContent = message || "Status changed successfully.";
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
+    }
+    toastClose.addEventListener("click", () => toast.classList.remove("show"));
+
+    function chkIcon(state){
+      // done = checkmark teal, active = check white, todo = empty circle
+      if(state === "todo"){
+        return `
+          <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="7" fill="none" stroke="rgba(0,0,0,0.22)" stroke-width="2"/>
+          </svg>
+        `;
+      }
+      const fill = state === "active" ? "#ffffff" : "#06a59a";
+      return `
+        <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="${fill}" d="M9.0 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
+        </svg>
+      `;
+    }
 
     function render(){
       el.innerHTML = "";
@@ -210,50 +406,87 @@
         const state = i < activeIndex ? "done" : (i === activeIndex ? "active" : "todo");
         btn.dataset.state = state;
 
-        if(i === 0){
-          const check = document.createElement("span");
-          check.className = "check";
-          check.innerHTML = `
-            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
-              <path fill="#06a59a" d="M9.0 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
-            </svg>
-          `;
-          btn.appendChild(check);
+        // Tooltip shows label for every stage (including the first)
+        const tooltipText = s.label && s.label.trim().length ? s.label : "Started";
+        btn.dataset.tooltip = tooltipText;
+        btn.dataset.haslabel = "true";
 
-          const span = document.createElement("span");
-          span.textContent = s.label || "";
-          btn.appendChild(span);
-        } else {
-          btn.textContent = s.label;
+        // Build content: checkbox + label (label hidden for first, like Salesforce)
+        const labelWrap = document.createElement("span");
+        labelWrap.className = "label";
+
+        const chk = document.createElement("span");
+        chk.className = "chk";
+        chk.innerHTML = chkIcon(state);
+        labelWrap.appendChild(chk);
+
+        const text = document.createElement("span");
+        text.textContent = s.label;
+        labelWrap.appendChild(text);
+
+        // Keep the first segment visually minimal (like your screenshot)
+        if(i === 0){
+          text.textContent = ""; // no text, just checkbox
         }
 
-        btn.addEventListener("click", () => setActive(i));
+        btn.appendChild(labelWrap);
+
+        btn.addEventListener("click", () => setActive(i, { announce: true }));
         el.appendChild(btn);
       });
     }
 
-    function setActive(i){
+    function setActive(i, opts = {}){
+      const prev = activeIndex;
       activeIndex = i;
       render();
+
+      // little pulse animation on the whole bar to “feel” like status moved
+      root.classList.remove("pulse");
+      // force reflow so animation restarts
+      void root.offsetWidth;
+      root.classList.add("pulse");
+
+      if(opts.announce){
+        const label = STAGES[activeIndex].label || "Started";
+        showToast(`Status changed successfully. (${label})`);
+      }
+
       window.dispatchEvent(new CustomEvent("dealStageChanged", {
         detail: {
           activeIndex,
           stageKey: STAGES[activeIndex].key,
-          stageLabel: STAGES[activeIndex].label
+          stageLabel: STAGES[activeIndex].label || "Started",
+          previousIndex: prev,
+          occurredAt: new Date().toISOString(),
+          itemId: getParam("itemId"),
+          boardId: getParam("boardId"),
+          userId: getParam("userId")
         }
       }));
     }
 
+    function getParam(name){
+      return new URLSearchParams(window.location.search).get(name);
+    }
+
     completeBtn.addEventListener("click", () => {
-      if(activeIndex < STAGES.length - 1) setActive(activeIndex + 1);
+      // more interactive: show toast even if already last
+      if(activeIndex < STAGES.length - 1){
+        setActive(activeIndex + 1, { announce: true });
+      } else {
+        showToast("Already at final status.");
+      }
     });
 
+    // Initial
     render();
 
+    // Small API for external control
     window.DealPath = {
       setStageByKey(key){
         const idx = STAGES.findIndex(s => s.key === key);
-        if(idx >= 0) setActive(idx);
+        if(idx >= 0) setActive(idx, { announce: false });
       },
       getActive(){
         return { activeIndex, ...STAGES[activeIndex] };
