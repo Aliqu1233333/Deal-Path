@@ -7,16 +7,18 @@
   <style>
     :root{
       /* === Palette === */
-      --done-bg: #4bca81; /* success green */
-      --done-fg: #ffffff;
-      --active-bg: #0176d3; /* salesforce blue */
+      --done-bg: #e5e5e5; /* official completed */
+      --done-fg: #6b6b6b;
+      --active-bg: #17345b;
       --active-fg: #ffffff;
-      --todo-bg: #f3f2f2; /* light gray */
-      --todo-fg: #706e6b;
-      --track-h: 32px;
-      --cut: 15px;
-      --radius: 4px; /* slightly less rounded for SF feel */
-      --gap: 0;
+      /* keep todo different so "done" is obvious */
+      --todo-bg: #d9d9d9;
+      --todo-fg: #6f6f6f;
+      --track-h: 40px;
+      --cut: 22px;
+      --radius: 20px;
+      /* very tight seams – reduced from 0.25px to 0px for near-zero gap */
+      --gap: 0px;
       --embed-pad-y: 18px;
       --embed-pad-x: 12px;
       --offset-down: 6px;
@@ -35,10 +37,10 @@
       box-sizing: border-box;
     }
     .frame{
-      min-height: auto;
+      min-height: 92px;
       display:flex;
       flex-direction: column;
-      align-items: stretch;
+      align-items: flex-start;
       justify-content: flex-start;
       transform: translateY(var(--offset-down));
     }
@@ -66,12 +68,12 @@
       align-items:center;
       justify-content:center;
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 750;
       letter-spacing: .1px;
       cursor:pointer;
       outline: none;
       border: 0;
-      padding: 0 10px;
+      padding: 0 14px;
       background: var(--todo-bg);
       color: var(--todo-fg);
       clip-path: polygon(
@@ -96,7 +98,9 @@
         0 100%
       );
       margin-left: 0;
-      padding-left: 10px;
+      justify-content:flex-start;
+      padding-left: 12px;
+      gap: 10px;
     }
     .stage:last-child{
       clip-path: polygon(
@@ -110,7 +114,14 @@
     /* States */
     .stage[data-state="active"]{ background: var(--active-bg); color: var(--active-fg); }
     .stage[data-state="todo"]{ background: var(--todo-bg); color: var(--todo-fg); }
-    .stage[data-state="done"]{ background: var(--done-bg); color: var(--done-fg); flex: 0 0 32px; padding: 0; }
+    /* Completed stages now match SF dark blue (same as active) */
+    .deal-path .stage[data-state="done"]{
+      background: var(--active-bg) !important;
+      color: var(--active-fg) !important;
+      flex: 0 0 40px; /* fixed width for checkbox-only */
+      padding: 0;
+      justify-content: center;
+    }
     /* ultra subtle border so seams don't read as gaps */
     .stage::before{
       content:"";
@@ -124,32 +135,37 @@
     }
     /* Checkbox */
     .chk{
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      border-radius: 10px;
       display:grid;
       place-items:center;
       flex: 0 0 auto;
-      background: transparent;
+      background: rgba(255,255,255,0.60);
+      box-shadow: inset 0 0 0 2px rgba(0,0,0,0.06);
       transition: background 160ms ease, box-shadow 160ms ease;
     }
+    .stage[data-state="active"] .chk{
+      background: rgba(255,255,255,0.20);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.18);
+    }
     .stage[data-state="done"] .chk{
-      background: transparent;
+      background: rgba(255,255,255,0.75);
+      box-shadow: inset 0 0 0 2px rgba(0,0,0,0.10);
     }
     .label{
       display:flex;
       align-items:center;
-      gap: 6px;
+      gap: 10px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .stage[data-state="done"] .label{
-      justify-content: center;
       gap: 0;
     }
-    /* Tooltip - kept but optional */
-    .stage::after{
+    /* Tooltip */
+    .stage[data-haslabel="true"]::after{
       content: attr(data-tooltip);
       position:absolute;
       left: 50%;
@@ -173,20 +189,20 @@
     }
     /* CTA */
     .cta{
-      height: 32px;
+      height: 34px;
       padding: 0 12px;
-      border-radius: 16px;
+      border-radius: 17px;
       border: 0;
       cursor:pointer;
       font-size: 12px;
       font-weight: 700;
       letter-spacing: .1px;
       color: #fff;
-      background: #0176d3;
+      background: #1d63ff;
       display:flex;
       align-items:center;
       gap: 8px;
-      box-shadow: 0 6px 16px rgba(1,118,211,0.20);
+      box-shadow: 0 6px 16px rgba(29,99,255,0.20);
       white-space:nowrap;
       flex: 0 0 auto;
       transition: transform 160ms ease, filter 160ms ease, box-shadow 160ms ease;
@@ -195,12 +211,12 @@
     }
     .cta:hover{
       filter: brightness(1.03);
-      box-shadow: 0 10px 26px rgba(1,118,211,0.24);
+      box-shadow: 0 10px 26px rgba(29,99,255,0.24);
       transform: translateY(-1px);
     }
     .cta:active{
       transform: translateY(1px);
-      box-shadow: 0 6px 16px rgba(1,118,211,0.14);
+      box-shadow: 0 6px 16px rgba(29,99,255,0.14);
     }
     .cta::before{
       content:"";
@@ -287,51 +303,54 @@
       transition: background 120ms ease;
     }
     .toast .x:hover{ background: rgba(0,0,0,0.06); }
-    /* Guidance */
-    .guidance{
+    /* Guidance Section */
+    .guidance {
       margin-top: 12px;
       width: 100%;
     }
-    .toggle{
+    .guidance-toggle {
       background: none;
       border: none;
+      padding: 0;
       font-size: 14px;
       font-weight: 700;
-      color: var(--active-bg);
+      color: #0066cc; /* SF-like blue link color */
+      cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
-      cursor: pointer;
-      padding: 0;
     }
-    .arrow{
-      transition: transform 200ms ease;
+    .arrow {
+      width: 12px;
+      height: 12px;
+      transition: transform 0.2s ease;
     }
-    .guidance.expanded .arrow{
+    .guidance.expanded .arrow {
       transform: rotate(180deg);
     }
-    .content{
+    .guidance-content {
       display: none;
-      font-size: 13px;
-      color: #181818;
       margin-top: 8px;
+      font-size: 13px;
+      color: #333;
     }
-    .guidance.expanded .content{
+    .guidance.expanded .guidance-content {
       display: block;
     }
-    .content .title{
-      font-weight: 700;
+    .guidance-content h4 {
+      margin: 0 0 8px;
       font-size: 14px;
+      font-weight: 700;
     }
-    .content ul{
-      margin: 8px 0;
-      padding-left: 20px;
-      list-style-type: disc;
+    .guidance-content ul {
+      margin: 0 0 12px 20px;
+      padding: 0;
+      list-style: disc;
     }
-    .content li{
+    .guidance-content li {
       margin-bottom: 4px;
     }
-    .content p{
+    .guidance-content p {
       margin: 0;
     }
     @media (max-width: 820px){
@@ -352,16 +371,18 @@
       </button>
       <div class="shimmer" id="shimmer"></div>
     </div>
-    <div class="guidance expanded" id="guidance">
-      <button class="toggle" id="guidanceToggle">
-        <svg class="arrow" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="currentColor" d="M7 10l5 5 5-5z"/>
+
+    <div class="guidance" id="guidanceSection">
+      <button class="guidance-toggle" id="guidanceToggle">
+        <svg class="arrow" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M7 10l5 5 5-5z"/>
         </svg>
         Guidance for Success
       </button>
-      <div class="content" id="guidanceContent"></div>
+      <div class="guidance-content" id="guidanceContent"></div>
     </div>
   </div>
+
   <div class="toast" id="toast" role="status" aria-live="polite">
     <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
       <path fill="#0ba79c" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1 14-4-4 1.4-1.4L11 12.2l5.6-5.6L18 8l-7 8Z"/>
@@ -373,6 +394,7 @@
       </svg>
     </button>
   </div>
+
   <script>
     const STAGES = [
       { key: "discovery", label: "Discovery" },
@@ -382,59 +404,56 @@
       { key: "negotiation_review", label: "Negotiation/Review" },
       { key: "closed", label: "Closed" }
     ];
-    const GUIDANCE = [
-      {
-        key: "discovery",
-        title: "Discover the opportunity.",
+
+    // Static guidance per stage – customize as needed
+    const GUIDANCE = {
+      discovery: {
+        title: "Discovery",
         questions: [
-          "Have you identified the key decision makers?",
-          "What is the customer's budget and timeline?"
+          "Understand the customer's current situation and pain points.",
+          "Identify key stakeholders and decision makers."
         ],
-        summary: "Ensure all discovery questions are answered before moving forward."
+        summary: "Gather all necessary information before moving forward."
       },
-      {
-        key: "dial_na",
-        title: "Make initial contact.",
+      dial_na: {
+        title: "Dial NA",
         questions: [
-          "Did you reach the prospect?",
-          "Have you scheduled a follow-up?"
+          "Attempt initial outreach.",
+          "Log any no-answer attempts and follow-up plan."
         ],
-        summary: "Log the call outcomes."
+        summary: "Persist with contact attempts."
       },
-      {
-        key: "contacted_nurture",
-        title: "Nurture the contact.",
+      contacted_nurture: {
+        title: "Contacted/Nurture",
         questions: [
-          "Is the lead responding to emails?",
-          "Have you provided value-added content?"
+          "Has initial contact been made?",
+          "Provide value through nurturing content."
         ],
-        summary: "Continue nurturing until ready for next stage."
+        summary: "Build relationship and interest."
       },
-      {
-        key: "interested_selling",
-        title: "Confirm selling interest.",
+      interested_selling: {
+        title: "Interested in Selling",
         questions: [
           "Does the customer want to proceed with a proposal?",
           "Have you addressed initial objections?"
         ],
-        summary: "Prepare for negotiation."
+        summary: "Confirm strong interest and prepare for proposal."
       },
-      {
-        key: "negotiation_review",
-        title: "Negotiate and review.",
+      negotiation_review: {
+        title: "Negotiation/Review",
         questions: [
-          "Are terms agreed upon?",
-          "Has the contract been reviewed?"
+          "Are terms and pricing agreed upon?",
+          "Has legal/contract review been completed?"
         ],
-        summary: "Finalize details."
+        summary: "Finalize details and close."
       },
-      {
-        key: "closed",
-        title: "Close the deal.",
+      closed: {
+        title: "Closed",
         questions: [],
-        summary: "Congratulations! Ensure all paperwork is completed."
+        summary: "Deal completed – celebrate and document lessons learned."
       }
-    ];
+    };
+
     let activeIndex = 0; // starts on Discovery
     const el = document.getElementById("dealPath");
     const completeBtn = document.getElementById("completeBtn");
@@ -443,47 +462,53 @@
     const toastMsg = document.getElementById("toastMsg");
     const toastClose = document.getElementById("toastClose");
     const guidanceToggle = document.getElementById("guidanceToggle");
-    const guidanceEl = document.getElementById("guidance");
+    const guidanceSection = document.getElementById("guidanceSection");
     const guidanceContent = document.getElementById("guidanceContent");
     let toastTimer = null;
+
     guidanceToggle.addEventListener("click", () => {
-      guidanceEl.classList.toggle("expanded");
+      guidanceSection.classList.toggle("expanded");
     });
+
     function showToast(message){
       toastMsg.textContent = message || "Status changed successfully.";
       toast.classList.add("show");
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => toast.classList.remove("show"), 2500);
     }
+
     toastClose.addEventListener("click", () => toast.classList.remove("show"));
+
     function chkIcon(state){
-      if(state === "done"){
+      if(state === "todo"){
         return `
           <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="#ffffff" d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
+            <circle cx="12" cy="12" r="7" fill="none" stroke="rgba(0,0,0,0.22)" stroke-width="2"/>
           </svg>
         `;
       }
+      const fill = state === "active" ? "#ffffff" : "#06a59a";
       return `
         <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="12" r="9" fill="none" stroke="${state === 'active' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.2)'}" stroke-width="2"/>
+          <path fill="${fill}" d="M9.0 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
         </svg>
       `;
     }
-    function updateGuidance(index){
-      const guide = GUIDANCE[index];
-      if(guide){
-        guidanceContent.innerHTML = `
-          <div class="title">${guide.title}</div>
-          <ul>
-            ${guide.questions.map(q => `<li>${q}</li>`).join('')}
-          </ul>
-          <p>${guide.summary}</p>
-        `;
+
+    function updateGuidance() {
+      const guide = GUIDANCE[STAGES[activeIndex].key];
+      if (guide) {
+        let html = `<h4>${guide.title}</h4>`;
+        if (guide.questions.length > 0) {
+          html += `<ul>${guide.questions.map(q => `<li>${q}</li>`).join('')}</ul>`;
+        }
+        html += `<p>${guide.summary}</p>`;
+        guidanceContent.innerHTML = html;
       } else {
         guidanceContent.innerHTML = '';
       }
     }
+
     function render(){
       el.innerHTML = "";
       STAGES.forEach((s, i) => {
@@ -495,23 +520,30 @@
         btn.dataset.stage = s.key;
         const state = (i < activeIndex) ? "done" : (i === activeIndex ? "active" : "todo");
         btn.dataset.state = state;
-        btn.dataset.tooltip = s.label;
+        const tooltipText = s.label && s.label.trim().length ? s.label : "Started";
+        btn.dataset.tooltip = tooltipText;
+        btn.dataset.haslabel = state !== "done" ? "true" : "false";
+
         const labelWrap = document.createElement("span");
         labelWrap.className = "label";
+
         const chk = document.createElement("span");
         chk.className = "chk";
         chk.innerHTML = chkIcon(state);
         labelWrap.appendChild(chk);
-        if(state !== "done"){
+
+        if (state !== "done") {
           const text = document.createElement("span");
           text.textContent = s.label;
           labelWrap.appendChild(text);
         }
+
         btn.appendChild(labelWrap);
         btn.addEventListener("click", () => setActive(i, { announce: true }));
         el.appendChild(btn);
       });
     }
+
     function rewardAnimation(){
       shimmer.classList.remove("run");
       void shimmer.offsetWidth;
@@ -525,12 +557,13 @@
         }
       }, 140);
     }
+
     function setActive(i, opts = {}){
       const prev = activeIndex;
       if(i === prev) return;
       activeIndex = i;
       render();
-      updateGuidance(activeIndex);
+      updateGuidance();
       rewardAnimation();
       if(opts.announce){
         const label = STAGES[activeIndex].label || "Started";
@@ -549,9 +582,11 @@
         }
       }));
     }
+
     function getParam(name){
       return new URLSearchParams(window.location.search).get(name);
     }
+
     completeBtn.addEventListener("click", () => {
       if(activeIndex < STAGES.length - 1){
         setTimeout(() => setActive(activeIndex + 1, { announce: true }), 120);
@@ -559,8 +594,12 @@
         showToast("Already at final status.");
       }
     });
+
     render();
-    updateGuidance(activeIndex);
+    updateGuidance();
+    // Start expanded or collapsed – your call; here collapsed by default
+    // guidanceSection.classList.add("expanded");
+
     window.DealPath = {
       setStageByKey(key){
         const idx = STAGES.findIndex(s => s.key === key);
