@@ -18,16 +18,21 @@
       --todo-bg: #e6e6e6;
       --todo-fg: #4f4f4f;
 
-      /* Make stages less thin (closer to earlier) */
-      --track-h: 40px;
-      --cut: 22px;
+      /* ✅ Make stages a tad thicker */
+      --track-h: 44px;            /* was 40px */
+
+      /* ✅ Make intersections less sharp */
+      --cut: 16px;                /* was 22px -> smaller cut softens the point */
+
       --radius: 20px;
 
-      /* ✅ Make gaps 2.5x larger than current (current overlap was 18px) */
-      --overlap: 10px;            /* smaller overlap => larger visible seams */
+      /* ✅ Make gaps a tad smaller (slightly more overlap than 10px) */
+      --overlap: 12px;            /* was 10px */
+
       --divider: 2px;
 
-      --embed-pad-y: 14px;
+      /* ✅ Increase upper padding by 2pts (pushes everything down slightly) */
+      --embed-pad-y: 16px;        /* was 14px */
       --embed-pad-x: 10px;
       --offset-down: 0px;
 
@@ -453,7 +458,6 @@
 
       <div class="panel" id="guidancePanel">
         <div class="panelHeader">
-          <!-- ✅ rename -->
           <div class="panelTitle">Stage Guidance</div>
           <div class="panelStage" id="panelStageLabel">—</div>
         </div>
