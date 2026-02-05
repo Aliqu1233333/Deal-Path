@@ -467,27 +467,15 @@
 
   <script>
     /**************************************************************
-     * ✅ MAKE.COM + MONDAY PERSISTENCE (TEAM-SHARED)
-     *
-     * You must create TWO Make webhooks:
-     *
-     * 1) SET stage webhook (POST)
-     *    - Receives: { itemId, columnId, stageLabel, stageKey, previousStageLabel, occurredAt, userId, boardId }
-     *    - Action: Monday "Change a Column Value"
-     *      Item ID = itemId
-     *      Column ID = status__1
-     *      Value = stageLabel (status label)
-     *
-     * 2) GET stage webhook (GET)
-     *    - Called as: MAKE_GET_STAGE_URL?itemId=123&columnId=status__1
-     *    - Action: Monday "Get an item" -> read status__1
-     *    - Respond: JSON { "stageLabel": "Dial NA" }  (or { "stageKey": "dial_na" })
-     *
+     * ✅ FAST LOAD IMPROVEMENTS ADDED
+     * - Instant render using last-known stage cached per itemId
+     * - Background refresh from Make/Monday (authoritative)
+     * - Only re-render if the remote stage differs
      **************************************************************/
 
     // ✅ PASTE your Make webhook URLs here:
-    const MAKE_SET_STAGE_URL = "https://hook.us1.make.com/92gwsrg3sja4ykamx8qax9tdw6nqemq6";
-    const MAKE_GET_STAGE_URL = "https://hook.us1.make.com/mnd1t2736lba22cphjm1qxfdffe1jemy";
+    const MAKE_SET_STAGE_URL = "https://hook.us1.make.com/92gwsrg3sja4ykamx8qax9tdw6nqemq6"; // <-- your full SET webhook URL
+    const MAKE_GET_STAGE_URL = "https://hook.us1.make.com/mnd1t2736lba22cphjm1qxfdffe1jemy"; // <-- your full GET webhook URL
 
     // Monday column where stage is stored:
     const MONDAY_STATUS_COLUMN_ID = "status__1"; // Lead Status
@@ -664,6 +652,10 @@
       if(i === prev) return;
 
       activeIndex = i;
+
+      // ✅ instant cache update so next open is fast
+      saveCachedStage();
+
       render();
 
       if(opts.announce){
@@ -671,7 +663,6 @@
         setTimeout(() => showToast(`Status changed successfully. (${label})`), 120);
       }
 
-      // fire client event (optional)
       window.dispatchEvent(new CustomEvent("dealStageChanged", {
         detail: {
           activeIndex,
@@ -685,29 +676,59 @@
         }
       }));
 
-      // ✅ Save to Monday via Make (team-shared)
       if(opts.saveRemote){
         saveStageToMonday(prev).catch(()=>{});
       }
     }
 
     function stageIndexFromResponse(data){
-      // Prefer stageKey
       if(data?.stageKey){
         const idx = STAGES.findIndex(s => s.key === data.stageKey);
         if(idx >= 0) return idx;
       }
-      // Fallback to stageLabel
       if(data?.stageLabel){
         const idx = STAGES.findIndex(s => (s.label || "").toLowerCase() === String(data.stageLabel).toLowerCase());
         if(idx >= 0) return idx;
       }
-      // Sometimes Make might return {leadStatus:"Dial NA"} etc.
       if(data?.leadStatus){
         const idx = STAGES.findIndex(s => (s.label || "").toLowerCase() === String(data.leadStatus).toLowerCase());
         if(idx >= 0) return idx;
       }
       return -1;
+    }
+
+    /* ===========================
+       ✅ FAST LOAD: local cache
+       =========================== */
+    function cacheKey(){
+      return "dealpath:lastStage:" + (getParam("itemId") || "unknown");
+    }
+
+    function loadCachedStage(){
+      const cached = localStorage.getItem(cacheKey());
+      if(!cached) return false;
+
+      const idxByKey = STAGES.findIndex(s => s.key === cached);
+      if(idxByKey >= 0){
+        activeIndex = idxByKey;
+        return true;
+      }
+
+      const idxByLabel = STAGES.findIndex(s => (s.label || "").toLowerCase() === String(cached).toLowerCase());
+      if(idxByLabel >= 0){
+        activeIndex = idxByLabel;
+        return true;
+      }
+
+      return false;
+    }
+
+    function saveCachedStage(){
+      try{
+        localStorage.setItem(cacheKey(), STAGES[activeIndex].key);
+      }catch(e){
+        // ignore storage issues
+      }
     }
 
     async function loadStageFromMonday(){
@@ -716,8 +737,8 @@
         showToast("Missing itemId in URL. Add ?itemId=###");
         return;
       }
-      if(!MAKE_GET_STAGE_URL || MAKE_GET_STAGE_URL.includes("PASTE_")){
-        // Not configured yet; don't block UI
+      if(!MAKE_GET_STAGE_URL || MAKE_GET_STAGE_URL === "https://hook.us1.make.com/"){
+        // not configured; don't block UI
         return;
       }
 
@@ -737,8 +758,11 @@
         const data = await res.json();
 
         const idx = stageIndexFromResponse(data);
-        if(idx >= 0){
+
+        // ✅ only re-render if the server says a different stage
+        if(idx >= 0 && idx !== activeIndex){
           activeIndex = idx;
+          saveCachedStage(); // keep cache in sync with server
           render();
         }
       } catch (e) {
@@ -752,15 +776,15 @@
       const itemId = getParam("itemId");
       if(!itemId) return;
 
-      if(isSavingRemoteStage) return; // simple lock to avoid rapid double posts
-      if(!MAKE_SET_STAGE_URL || MAKE_SET_STAGE_URL.includes("PASTE_")){
+      if(isSavingRemoteStage) return;
+      if(!MAKE_SET_STAGE_URL || MAKE_SET_STAGE_URL === "https://hook.us1.make.com/"){
         showToast("Make SET webhook not configured yet.");
         return;
       }
 
       const payload = {
         itemId: String(itemId),
-        columnId: MONDAY_STATUS_COLUMN_ID,           // "status__1"
+        columnId: MONDAY_STATUS_COLUMN_ID,
         stageKey: STAGES[activeIndex].key,
         stageLabel: STAGES[activeIndex].label,
         previousStageKey: STAGES[prevIndex]?.key || null,
@@ -801,7 +825,11 @@
       panelWrap.classList.toggle("collapsed", !next);
     });
 
-    // Initial render (shows UI immediately), then load remote stage and re-render if needed
+    // ✅ FAST START:
+    // 1) Load cached stage (instant)
+    // 2) Render immediately
+    // 3) Background refresh from Make/Monday
+    loadCachedStage();
     render();
     loadStageFromMonday();
 
