@@ -6,7 +6,6 @@
   <title>Deal Path</title>
   <style>
     :root{
-      /* Salesforce-ish font stack (modern, clean, less bulky) */
       --font: "Salesforce Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
 
       --active-bg: #17345b;
@@ -18,17 +17,14 @@
       --todo-bg: #e6e6e6;
       --todo-fg: #4f4f4f;
 
-      /* stage sizing + softer intersections */
-      --track-h: 44px;     /* thicker than before, still clean */
-      --cut: 16px;         /* less sharp intersections */
+      --track-h: 44px;
+      --cut: 16px;
       --radius: 20px;
 
-      /* seam / gap tuning */
-      --overlap: 12px;     /* slightly smaller gaps than 10px version */
+      --overlap: 12px;
       --divider: 2px;
 
-      /* embed placement */
-      --embed-pad-y: 16px; /* +2 from 14px */
+      --embed-pad-y: 16px;
       --embed-pad-x: 10px;
       --offset-down: 0px;
 
@@ -43,7 +39,6 @@
       --panel-muted: #6a6a6a;
     }
 
-    /* Fit embed */
     html,body{
       width:100%;
       max-width:100%;
@@ -84,7 +79,6 @@
       min-width: 0;
     }
 
-    /* Left disclosure button */
     .disclosure{
       width: 32px;
       height: 32px;
@@ -125,7 +119,6 @@
       align-items:center;
       justify-content:center;
 
-      /* modern + readable, not bulky */
       font-size: 13.5px;
       font-weight: 600;
       letter-spacing: .25px;
@@ -162,8 +155,6 @@
         0 100%
       );
       margin-left: 0;
-
-      /* Center the first stage ("Discovery") */
       justify-content:center;
       padding-left: 12px;
     }
@@ -178,7 +169,6 @@
       );
     }
 
-    /* divider */
     .stage:not(:last-child)::after{
       content:"";
       position:absolute;
@@ -190,7 +180,6 @@
       pointer-events:none;
     }
 
-    /* states */
     .stage[data-state="active"]{ background: var(--active-bg); color: var(--active-fg); font-weight: 650; }
     .stage[data-state="todo"]{ background: var(--todo-bg); color: var(--todo-fg); }
     .deal-path .stage[data-state="done"]{
@@ -248,11 +237,9 @@
       min-width: 0;
     }
 
-    /* done: checkbox only */
     .stage[data-state="done"] .text{ display:none; }
     .stage[data-state="done"] .label{ gap: 0; justify-content:center; }
 
-    /* Tooltip */
     .tip{
       position:absolute;
       left: 50%;
@@ -276,7 +263,6 @@
       transform: translateX(-50%) translateY(0px);
     }
 
-    /* CTA */
     .cta{
       height: 32px;
       padding: 0 10px;
@@ -313,14 +299,13 @@
       .cta{margin-left:auto;}
     }
 
-    /* Guidance panel */
     .panel{
       margin-top: 8px;
       background: var(--panel-bg);
       border: 1px solid var(--panel-border);
       border-radius: 12px;
       overflow:hidden;
-      box-shadow: none; /* removed shadow */
+      box-shadow: none;
       width:100%;
       max-width:100%;
       box-sizing:border-box;
@@ -386,7 +371,6 @@
       min-height:0;
     }
 
-    /* Toast */
     .toast{
       position: fixed;
       top: 16px;
@@ -482,6 +466,32 @@
   </div>
 
   <script>
+    /**************************************************************
+     * ✅ MAKE.COM + MONDAY PERSISTENCE (TEAM-SHARED)
+     *
+     * You must create TWO Make webhooks:
+     *
+     * 1) SET stage webhook (POST)
+     *    - Receives: { itemId, columnId, stageLabel, stageKey, previousStageLabel, occurredAt, userId, boardId }
+     *    - Action: Monday "Change a Column Value"
+     *      Item ID = itemId
+     *      Column ID = status__1
+     *      Value = stageLabel (status label)
+     *
+     * 2) GET stage webhook (GET)
+     *    - Called as: MAKE_GET_STAGE_URL?itemId=123&columnId=status__1
+     *    - Action: Monday "Get an item" -> read status__1
+     *    - Respond: JSON { "stageLabel": "Dial NA" }  (or { "stageKey": "dial_na" })
+     *
+     **************************************************************/
+
+    // ✅ PASTE your Make webhook URLs here:
+    const MAKE_SET_STAGE_URL = "https://hook.us1.make.com/92gwsrg3sja4ykamx8qax9tdw6nqemq6";
+    const MAKE_GET_STAGE_URL = "https://hook.us1.make.com/mnd1t2736lba22cphjm1qxfdffe1jemy";
+
+    // Monday column where stage is stored:
+    const MONDAY_STATUS_COLUMN_ID = "status__1"; // Lead Status
+
     const STAGES = [
       { key: "discovery",           label: "Discovery" },
       { key: "dial_na",             label: "Dial NA" },
@@ -542,47 +552,36 @@
       }
     };
 
-    /* ===========================
-       ✅ Per-item persistence (LOCAL ONLY)
-       - Uses itemId from URL query string
-       - Saves stageKey per item in localStorage
-       =========================== */
-
     function getParam(name){
       return new URLSearchParams(window.location.search).get(name);
     }
 
-    function storageKey(){
-      return "dealpath:stage:" + (getParam("itemId") || "unknown");
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
     }
 
-    function loadSavedStage(){
-      const savedKey = localStorage.getItem(storageKey());
-      if(!savedKey) return;
-      const idx = STAGES.findIndex(s => s.key === savedKey);
-      if(idx >= 0) activeIndex = idx;
-    }
-
-    function saveStage(){
-      // saves current stage for this itemId
-      localStorage.setItem(storageKey(), STAGES[activeIndex].key);
-    }
-
+    // --- State ---
     let activeIndex = 0;
+    let isLoadingRemoteStage = false;
+    let isSavingRemoteStage = false;
 
+    // --- DOM ---
     const el = document.getElementById("dealPath");
+    const completeBtn = document.getElementById("completeBtn");
+    const notesToggle = document.getElementById("notesToggle");
+    const panelWrap = document.getElementById("panelWrap");
+    const panelStageLabel = document.getElementById("panelStageLabel");
+    const panelBody = document.getElementById("panelBody");
 
     const toast = document.getElementById("toast");
     const toastMsg = document.getElementById("toastMsg");
     const toastClose = document.getElementById("toastClose");
     let toastTimer = null;
-
-    const completeBtn = document.getElementById("completeBtn");
-
-    const notesToggle = document.getElementById("notesToggle");
-    const panelWrap = document.getElementById("panelWrap");
-    const panelStageLabel = document.getElementById("panelStageLabel");
-    const panelBody = document.getElementById("panelBody");
 
     function showToast(message){
       toastMsg.textContent = message || "Status changed successfully.";
@@ -653,7 +652,7 @@
         btn.appendChild(labelWrap);
         btn.appendChild(tip);
 
-        btn.addEventListener("click", () => setActive(i, { announce: true }));
+        btn.addEventListener("click", () => setActive(i, { announce: true, saveRemote: true }));
         el.appendChild(btn);
       });
 
@@ -665,10 +664,6 @@
       if(i === prev) return;
 
       activeIndex = i;
-
-      /* ✅ Persist stage per itemId */
-      saveStage();
-
       render();
 
       if(opts.announce){
@@ -676,6 +671,7 @@
         setTimeout(() => showToast(`Status changed successfully. (${label})`), 120);
       }
 
+      // fire client event (optional)
       window.dispatchEvent(new CustomEvent("dealStageChanged", {
         detail: {
           activeIndex,
@@ -688,11 +684,111 @@
           userId: getParam("userId")
         }
       }));
+
+      // ✅ Save to Monday via Make (team-shared)
+      if(opts.saveRemote){
+        saveStageToMonday(prev).catch(()=>{});
+      }
+    }
+
+    function stageIndexFromResponse(data){
+      // Prefer stageKey
+      if(data?.stageKey){
+        const idx = STAGES.findIndex(s => s.key === data.stageKey);
+        if(idx >= 0) return idx;
+      }
+      // Fallback to stageLabel
+      if(data?.stageLabel){
+        const idx = STAGES.findIndex(s => (s.label || "").toLowerCase() === String(data.stageLabel).toLowerCase());
+        if(idx >= 0) return idx;
+      }
+      // Sometimes Make might return {leadStatus:"Dial NA"} etc.
+      if(data?.leadStatus){
+        const idx = STAGES.findIndex(s => (s.label || "").toLowerCase() === String(data.leadStatus).toLowerCase());
+        if(idx >= 0) return idx;
+      }
+      return -1;
+    }
+
+    async function loadStageFromMonday(){
+      const itemId = getParam("itemId");
+      if(!itemId){
+        showToast("Missing itemId in URL. Add ?itemId=###");
+        return;
+      }
+      if(!MAKE_GET_STAGE_URL || MAKE_GET_STAGE_URL.includes("PASTE_")){
+        // Not configured yet; don't block UI
+        return;
+      }
+
+      isLoadingRemoteStage = true;
+      try{
+        const url = new URL(MAKE_GET_STAGE_URL);
+        url.searchParams.set("itemId", itemId);
+        url.searchParams.set("columnId", MONDAY_STATUS_COLUMN_ID);
+
+        const res = await fetch(url.toString(), {
+          method: "GET",
+          headers: { "Accept": "application/json" },
+          cache: "no-store"
+        });
+
+        if(!res.ok) throw new Error("GET stage failed: " + res.status);
+        const data = await res.json();
+
+        const idx = stageIndexFromResponse(data);
+        if(idx >= 0){
+          activeIndex = idx;
+          render();
+        }
+      } catch (e) {
+        console.warn("Could not load remote stage:", e);
+      } finally {
+        isLoadingRemoteStage = false;
+      }
+    }
+
+    async function saveStageToMonday(prevIndex){
+      const itemId = getParam("itemId");
+      if(!itemId) return;
+
+      if(isSavingRemoteStage) return; // simple lock to avoid rapid double posts
+      if(!MAKE_SET_STAGE_URL || MAKE_SET_STAGE_URL.includes("PASTE_")){
+        showToast("Make SET webhook not configured yet.");
+        return;
+      }
+
+      const payload = {
+        itemId: String(itemId),
+        columnId: MONDAY_STATUS_COLUMN_ID,           // "status__1"
+        stageKey: STAGES[activeIndex].key,
+        stageLabel: STAGES[activeIndex].label,
+        previousStageKey: STAGES[prevIndex]?.key || null,
+        previousStageLabel: STAGES[prevIndex]?.label || null,
+        occurredAt: new Date().toISOString(),
+        boardId: getParam("boardId"),
+        userId: getParam("userId")
+      };
+
+      isSavingRemoteStage = true;
+      try{
+        await fetch(MAKE_SET_STAGE_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          keepalive: true
+        });
+      } catch (e) {
+        console.warn("Save to Monday failed:", e);
+        showToast("Could not save stage. Please retry.");
+      } finally {
+        isSavingRemoteStage = false;
+      }
     }
 
     completeBtn.addEventListener("click", () => {
       if(activeIndex < STAGES.length - 1){
-        setTimeout(() => setActive(activeIndex + 1, { announce: true }), 80);
+        setTimeout(() => setActive(activeIndex + 1, { announce: true, saveRemote: true }), 80);
       } else {
         showToast("Already at final status.");
       }
@@ -705,23 +801,14 @@
       panelWrap.classList.toggle("collapsed", !next);
     });
 
-    function escapeHtml(str){
-      return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
-    /* ✅ Load saved stage for this itemId BEFORE first render */
-    loadSavedStage();
+    // Initial render (shows UI immediately), then load remote stage and re-render if needed
     render();
+    loadStageFromMonday();
 
     window.DealPath = {
       setStageByKey(key){
         const idx = STAGES.findIndex(s => s.key === key);
-        if(idx >= 0) setActive(idx, { announce: false });
+        if(idx >= 0) setActive(idx, { announce: false, saveRemote: true });
       },
       getActive(){
         return { activeIndex, ...STAGES[activeIndex] };
