@@ -15,24 +15,20 @@
       --done-bg: var(--active-bg);
       --done-fg: var(--active-fg);
 
-      --todo-bg: #ededed;
+      --todo-bg: #e6e6e6;
       --todo-fg: #4f4f4f;
 
-      /* ✅ Make stages a tad thicker */
-      --track-h: 44px;            /* was 40px */
-
-      /* ✅ Make intersections less sharp */
-      --cut: 16px;                /* was 22px -> smaller cut softens the point */
-
+      /* stage sizing + softer intersections */
+      --track-h: 44px;     /* thicker than before, still clean */
+      --cut: 16px;         /* less sharp intersections */
       --radius: 20px;
 
-      /* ✅ Make gaps a tad smaller (slightly more overlap than 10px) */
-      --overlap: 12px;            /* was 10px */
-
+      /* seam / gap tuning */
+      --overlap: 12px;     /* slightly smaller gaps than 10px version */
       --divider: 2px;
 
-      /* ✅ Increase upper padding by 2pts (pushes everything down slightly) */
-      --embed-pad-y: 18px;        /* was 14px */
+      /* embed placement */
+      --embed-pad-y: 16px; /* +2 from 14px */
       --embed-pad-x: 10px;
       --offset-down: 0px;
 
@@ -52,6 +48,7 @@
       width:100%;
       max-width:100%;
       overflow-x:hidden;
+      min-height: 140px;
     }
 
     body{
@@ -128,7 +125,7 @@
       align-items:center;
       justify-content:center;
 
-      /* slightly larger / cleaner */
+      /* modern + readable, not bulky */
       font-size: 13.5px;
       font-weight: 600;
       letter-spacing: .25px;
@@ -166,7 +163,7 @@
       );
       margin-left: 0;
 
-      /* ✅ Center the first stage ("Discovery") */
+      /* Center the first stage ("Discovery") */
       justify-content:center;
       padding-left: 12px;
     }
@@ -194,7 +191,7 @@
     }
 
     /* states */
-    .stage[data-state="active"]{ background: var(--active-bg); color: var(--active-fg); }
+    .stage[data-state="active"]{ background: var(--active-bg); color: var(--active-fg); font-weight: 650; }
     .stage[data-state="todo"]{ background: var(--todo-bg); color: var(--todo-fg); }
     .deal-path .stage[data-state="done"]{
       background: var(--done-bg) !important;
@@ -287,7 +284,7 @@
       border: 0;
       cursor:pointer;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: .1px;
       color: #fff;
       background: #1d63ff;
@@ -318,12 +315,12 @@
 
     /* Guidance panel */
     .panel{
-      margin-top: 6px;
+      margin-top: 8px;
       background: var(--panel-bg);
       border: 1px solid var(--panel-border);
       border-radius: 12px;
       overflow:hidden;
-      box-shadow:none;
+      box-shadow: none; /* removed shadow */
       width:100%;
       max-width:100%;
       box-sizing:border-box;
@@ -545,6 +542,32 @@
       }
     };
 
+    /* ===========================
+       ✅ Per-item persistence (LOCAL ONLY)
+       - Uses itemId from URL query string
+       - Saves stageKey per item in localStorage
+       =========================== */
+
+    function getParam(name){
+      return new URLSearchParams(window.location.search).get(name);
+    }
+
+    function storageKey(){
+      return "dealpath:stage:" + (getParam("itemId") || "unknown");
+    }
+
+    function loadSavedStage(){
+      const savedKey = localStorage.getItem(storageKey());
+      if(!savedKey) return;
+      const idx = STAGES.findIndex(s => s.key === savedKey);
+      if(idx >= 0) activeIndex = idx;
+    }
+
+    function saveStage(){
+      // saves current stage for this itemId
+      localStorage.setItem(storageKey(), STAGES[activeIndex].key);
+    }
+
     let activeIndex = 0;
 
     const el = document.getElementById("dealPath");
@@ -642,6 +665,10 @@
       if(i === prev) return;
 
       activeIndex = i;
+
+      /* ✅ Persist stage per itemId */
+      saveStage();
+
       render();
 
       if(opts.announce){
@@ -661,10 +688,6 @@
           userId: getParam("userId")
         }
       }));
-    }
-
-    function getParam(name){
-      return new URLSearchParams(window.location.search).get(name);
     }
 
     completeBtn.addEventListener("click", () => {
@@ -691,6 +714,8 @@
         .replaceAll("'","&#039;");
     }
 
+    /* ✅ Load saved stage for this itemId BEFORE first render */
+    loadSavedStage();
     render();
 
     window.DealPath = {
