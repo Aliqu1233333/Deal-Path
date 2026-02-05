@@ -6,6 +6,9 @@
   <title>Deal Path</title>
   <style>
     :root{
+      /* Salesforce-ish font stack (modern, clean, less bulky) */
+      --font: "Salesforce Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+
       --active-bg: #17345b;
       --active-fg: #ffffff;
 
@@ -15,14 +18,16 @@
       --todo-bg: #e6e6e6;
       --todo-fg: #4f4f4f;
 
-      --track-h: 36px;          /* slightly shorter to fit embeds */
-      --cut: 18px;              /* smaller chevron cut to reduce width pressure */
-      --radius: 18px;
+      /* Make stages less thin (closer to earlier) */
+      --track-h: 40px;
+      --cut: 22px;
+      --radius: 20px;
 
-      --overlap: 18px;          /* tight seams */
+      /* ✅ Make gaps 2.5x larger than current (current overlap was 18px) */
+      --overlap: 7px;           /* smaller overlap => larger visible seams */
       --divider: 2px;
 
-      --embed-pad-y: 10px;      /* reduce outer padding */
+      --embed-pad-y: 10px;
       --embed-pad-x: 10px;
       --offset-down: 0px;
 
@@ -35,15 +40,13 @@
       --panel-border: #e6e6e6;
       --panel-title: #2e2e2e;
       --panel-muted: #6a6a6a;
-
-      --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
 
-    /* === IMPORTANT: make embed always fit horizontally === */
+    /* Fit embed */
     html,body{
       width:100%;
       max-width:100%;
-      overflow-x:hidden;        /* kills horizontal scroll / overflow */
+      overflow-x:hidden;
     }
 
     body{
@@ -53,6 +56,8 @@
       padding: var(--embed-pad-y) var(--embed-pad-x);
       box-sizing: border-box;
       color: #111;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     .frame{
@@ -65,8 +70,8 @@
 
     .root{
       width: 100%;
-      max-width: 100%;          /* don't exceed embed width */
-      min-width: 0;             /* allow flex children to shrink */
+      max-width: 100%;
+      min-width: 0;
     }
 
     .bar{
@@ -74,7 +79,7 @@
       display:flex;
       align-items:center;
       gap: 8px;
-      min-width: 0;             /* critical for shrinking inside embeds */
+      min-width: 0;
     }
 
     /* Left disclosure button */
@@ -107,25 +112,26 @@
       overflow:hidden;
       border-radius: var(--radius);
       background: transparent;
-      min-width: 0;             /* allow shrink */
+      min-width: 0;
     }
 
     .stage{
       position:relative;
       flex: 1 1 0;
-      min-width: 0;             /* allow text truncation */
+      min-width: 0;
       display:flex;
       align-items:center;
       justify-content:center;
 
-      font-size: 11px;          /* smaller to fit embed */
-      font-weight: 800;
+      /* slightly larger / cleaner */
+      font-size: 12px;
+      font-weight: 700;
       letter-spacing: .1px;
 
       cursor:pointer;
       outline: none;
       border: 0;
-      padding: 0 8px;           /* tighter */
+      padding: 0 12px;
       background: var(--todo-bg);
       color: var(--todo-fg);
 
@@ -142,7 +148,7 @@
       transition: transform 160ms ease, filter 160ms ease;
     }
 
-    .stage:hover{ filter: brightness(0.985); }
+    .stage:hover{ filter: brightness(0.99); }
     .stage:active{ transform: translateY(1px); }
 
     .stage:first-child{
@@ -154,8 +160,10 @@
         0 100%
       );
       margin-left: 0;
-      justify-content:flex-start;
-      padding-left: 10px;
+
+      /* ✅ Center the first stage ("Discovery") */
+      justify-content:center;
+      padding-left: 12px;
     }
 
     .stage:last-child{
@@ -168,7 +176,7 @@
       );
     }
 
-    /* thin divider */
+    /* divider */
     .stage:not(:last-child)::after{
       content:"";
       position:absolute;
@@ -202,7 +210,7 @@
     .label{
       display:flex;
       align-items:center;
-      gap: 8px;
+      gap: 10px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -254,7 +262,7 @@
       padding: 6px 10px;
       border-radius: 8px;
       font-size: 12px;
-      font-weight: 750;
+      font-weight: 650;
       background: rgba(17,17,17,0.92);
       color: #fff;
       box-shadow: 0 10px 30px rgba(0,0,0,0.18);
@@ -273,8 +281,8 @@
       border-radius: 16px;
       border: 0;
       cursor:pointer;
-      font-size: 11px;
-      font-weight: 850;
+      font-size: 12px;
+      font-weight: 700;
       letter-spacing: .1px;
       color: #fff;
       background: #1d63ff;
@@ -298,39 +306,9 @@
       box-shadow: 0 6px 16px rgba(29,99,255,0.14);
     }
 
-    /* if embed is narrow, let CTA wrap to next line */
     @media (max-width: 760px){
       .bar{flex-wrap:wrap;}
       .cta{margin-left:auto;}
-    }
-
-    /* Shimmer */
-    .shimmer{
-      position:absolute;
-      inset: -6px -10px;
-      pointer-events:none;
-      opacity: 0;
-      border-radius: 22px;
-      background:
-        radial-gradient(circle at 10% 30%, rgba(255,255,255,0.28), transparent 40%),
-        radial-gradient(circle at 30% 70%, rgba(255,255,255,0.18), transparent 45%),
-        radial-gradient(circle at 65% 35%, rgba(255,255,255,0.22), transparent 42%),
-        radial-gradient(circle at 90% 60%, rgba(255,255,255,0.16), transparent 46%);
-      transform: scale(0.98);
-    }
-    .shimmer.run{ animation: shimmer 720ms ease; }
-    @keyframes shimmer{
-      0%   { opacity: 0; transform: scale(0.985); }
-      25%  { opacity: 1; }
-      65%  { opacity: 0.55; }
-      100% { opacity: 0; transform: scale(1); }
-    }
-    .pop-active{ animation: popActive 520ms cubic-bezier(.2,.9,.2,1); }
-    @keyframes popActive{
-      0%   { transform: scale(1); }
-      35%  { transform: scale(1.02); }
-      70%  { transform: scale(0.995); }
-      100% { transform: scale(1); }
     }
 
     /* Guidance panel */
@@ -346,7 +324,6 @@
       box-sizing:border-box;
     }
 
-    /* Header: left title, right stage (like SF) */
     .panelHeader{
       padding: 10px 12px;
       display:flex;
@@ -356,7 +333,7 @@
       min-width: 0;
     }
     .panelTitle{
-      font-weight: 850;
+      font-weight: 800;
       color: var(--panel-title);
       font-size: 12px;
       white-space: nowrap;
@@ -366,7 +343,7 @@
     .panelStage{
       font-size: 11px;
       color: var(--panel-muted);
-      font-weight: 800;
+      font-weight: 650;
       white-space: nowrap;
       overflow:hidden;
       text-overflow: ellipsis;
@@ -382,7 +359,7 @@
     .panelBody h4{
       margin: 8px 0 6px 0;
       font-size: 12px;
-      font-weight: 900;
+      font-weight: 800;
     }
     .panelBody ul{
       margin: 6px 0 0 18px;
@@ -391,7 +368,7 @@
     .panelBody li{
       margin: 4px 0;
       color: #4a4a4a;
-      font-weight: 650;
+      font-weight: 550;
     }
 
     .panelWrap{
@@ -434,7 +411,7 @@
       pointer-events:auto;
     }
     .toast .msg{
-      font-weight: 850;
+      font-weight: 700;
       font-size: 13px;
       flex:1;
     }
@@ -472,13 +449,12 @@
           </svg>
           Mark Stage as Complete
         </button>
-
-        <div class="shimmer" id="shimmer"></div>
       </div>
 
       <div class="panel" id="guidancePanel">
         <div class="panelHeader">
-          <div class="panelTitle">Guidance for Success</div>
+          <!-- ✅ rename -->
+          <div class="panelTitle">Stage Guidance</div>
           <div class="panelStage" id="panelStageLabel">—</div>
         </div>
 
@@ -568,13 +544,13 @@
     let activeIndex = 0;
 
     const el = document.getElementById("dealPath");
-    const completeBtn = document.getElementById("completeBtn");
-    const shimmer = document.getElementById("shimmer");
 
     const toast = document.getElementById("toast");
     const toastMsg = document.getElementById("toastMsg");
     const toastClose = document.getElementById("toastClose");
     let toastTimer = null;
+
+    const completeBtn = document.getElementById("completeBtn");
 
     const notesToggle = document.getElementById("notesToggle");
     const panelWrap = document.getElementById("panelWrap");
@@ -613,7 +589,7 @@
       const bullets = (note.bullets || []).map(b => `<li>${escapeHtml(b)}</li>`).join("");
       panelBody.innerHTML = `
         <h4>${escapeHtml(note.title || "Notes")}</h4>
-        ${bullets ? `<ul>${bullets}</ul>` : `<div style="color:#6a6a6a;font-weight:650;">No notes set for this stage.</div>`}
+        ${bullets ? `<ul>${bullets}</ul>` : `<div style="color:#6a6a6a;font-weight:550;">No notes set for this stage.</div>`}
       `;
     }
 
@@ -657,32 +633,16 @@
       renderGuidance();
     }
 
-    function rewardAnimation(){
-      shimmer.classList.remove("run");
-      void shimmer.offsetWidth;
-      shimmer.classList.add("run");
-
-      setTimeout(() => {
-        const activeEl = el.querySelector('.stage[data-state="active"]');
-        if(activeEl){
-          activeEl.classList.remove("pop-active");
-          void activeEl.offsetWidth;
-          activeEl.classList.add("pop-active");
-        }
-      }, 140);
-    }
-
     function setActive(i, opts = {}){
       const prev = activeIndex;
       if(i === prev) return;
 
       activeIndex = i;
       render();
-      rewardAnimation();
 
       if(opts.announce){
         const label = STAGES[activeIndex].label || "Started";
-        setTimeout(() => showToast(`Status changed successfully. (${label})`), 220);
+        setTimeout(() => showToast(`Status changed successfully. (${label})`), 120);
       }
 
       window.dispatchEvent(new CustomEvent("dealStageChanged", {
@@ -705,7 +665,7 @@
 
     completeBtn.addEventListener("click", () => {
       if(activeIndex < STAGES.length - 1){
-        setTimeout(() => setActive(activeIndex + 1, { announce: true }), 120);
+        setTimeout(() => setActive(activeIndex + 1, { announce: true }), 80);
       } else {
         showToast("Already at final status.");
       }
