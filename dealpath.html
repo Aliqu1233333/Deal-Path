@@ -17,6 +17,7 @@
       --todo-bg: #e6e6e6;
       --todo-fg: #4f4f4f;
 
+      /* Deal Path sizing */
       --track-h: 44px;
       --cut: 16px;
       --radius: 20px;
@@ -24,8 +25,11 @@
       --overlap: 12px;
       --divider: 2px;
 
-      --embed-pad-y: 60px;
+      /* ✅ TOP padding (you said you moved to 60pts) */
+      --embed-pad-top: 60px;
+      --embed-pad-bottom: 16px;
       --embed-pad-x: 10px;
+
       --offset-down: 0px;
 
       --toast-bg: #bff3ea;
@@ -37,20 +41,30 @@
       --panel-border: #e6e6e6;
       --panel-title: #2e2e2e;
       --panel-muted: #6a6a6a;
+
+      /* Highlights panel */
+      --hl-bg: #ffffff;
+      --hl-border: #e6e6e6;
+      --hl-radius: 12px;
+      --hl-label: #6b7280;
+      --hl-value: #111827;
+      --hl-divider: #e5e7eb;
+      --hl-icon-bg: rgba(29,99,255,0.10);
+      --hl-icon-fg: #1d63ff;
     }
 
     html,body{
       width:100%;
       max-width:100%;
       overflow-x:hidden;
-      min-height: 140px;
+      min-height: 180px;
     }
 
     body{
       margin:0;
       background: transparent;
       font-family: var(--font);
-      padding: var(--embed-pad-y) var(--embed-pad-x);
+      padding: var(--embed-pad-top) var(--embed-pad-x) var(--embed-pad-bottom);
       box-sizing: border-box;
       color: #111;
       -webkit-font-smoothing: antialiased;
@@ -69,8 +83,76 @@
       width: 100%;
       max-width: 100%;
       min-width: 0;
+      display:flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
+    /* ✅ Highlights Panel */
+    .highlights{
+      width: 100%;
+      background: var(--hl-bg);
+      border: 1px solid var(--hl-border);
+      border-radius: var(--hl-radius);
+      overflow:hidden;
+      box-sizing:border-box;
+    }
+    .highRow{
+      display:flex;
+      align-items:stretch;
+      gap: 0;
+      min-width:0;
+    }
+    .leadIcon{
+      width: 44px;
+      min-width: 44px;
+      display:grid;
+      place-items:center;
+      border-right: 1px solid var(--hl-divider);
+      background: #fff;
+    }
+    .leadIcon .badge{
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      background: var(--hl-icon-bg);
+      display:grid;
+      place-items:center;
+    }
+
+    .metrics{
+      flex: 1 1 auto;
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      min-width:0;
+    }
+    .metric{
+      padding: 10px 12px;
+      min-width:0;
+    }
+    .metric:not(:last-child){
+      border-right: 1px solid var(--hl-divider);
+    }
+    .mLabel{
+      font-size: 11px;
+      font-weight: 650;
+      color: var(--hl-label);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .mValue{
+      margin-top: 6px;
+      font-size: 16px;      /* visible but not huge */
+      font-weight: 750;
+      letter-spacing: .1px;
+      color: var(--hl-value);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Deal path row */
     .bar{
       width: 100%;
       display:flex;
@@ -237,6 +319,7 @@
       min-width: 0;
     }
 
+    /* done: checkbox only */
     .stage[data-state="done"] .text{ display:none; }
     .stage[data-state="done"] .label{ gap: 0; justify-content:center; }
 
@@ -294,11 +377,15 @@
       box-shadow: 0 6px 16px rgba(29,99,255,0.14);
     }
 
-    @media (max-width: 760px){
+    @media (max-width: 860px){
+      .metrics{ grid-template-columns: 1fr 1fr; }
+      .metric:nth-child(2){ border-right: 0; }
+      .metric:nth-child(1), .metric:nth-child(2){ border-bottom: 1px solid var(--hl-divider); }
       .bar{flex-wrap:wrap;}
       .cta{margin-left:auto;}
     }
 
+    /* Guidance panel */
     .panel{
       margin-top: 8px;
       background: var(--panel-bg);
@@ -371,6 +458,7 @@
       min-height:0;
     }
 
+    /* Toast */
     .toast{
       position: fixed;
       top: 16px;
@@ -420,6 +508,40 @@
   <div class="frame">
     <div class="root" id="root">
 
+      <!-- ✅ NEW: Highlights Panel -->
+      <div class="highlights" aria-label="Highlights panel">
+        <div class="highRow">
+          <div class="leadIcon" aria-hidden="true">
+            <div class="badge">
+              <!-- Salesforce-ish Lead icon -->
+              <svg width="16" height="16" viewBox="0 0 24 24">
+                <path fill="var(--hl-icon-fg)" d="M12 12c2.2 0 4-1.8 4-4s-1.8-4-4-4-4 1.8-4 4 1.8 4 4 4Zm0 2c-2.7 0-8 1.4-8 4v2h16v-2c0-2.6-5.3-4-8-4Z"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="metrics">
+            <div class="metric">
+              <div class="mLabel">Lead Score</div>
+              <div class="mValue" id="mLeadScore">—</div>
+            </div>
+            <div class="metric">
+              <div class="mLabel">Current Stage Age</div>
+              <div class="mValue" id="mStageAge">—</div>
+            </div>
+            <div class="metric">
+              <div class="mLabel">Since Last Activity</div>
+              <div class="mValue" id="mSinceLast">—</div>
+            </div>
+            <div class="metric">
+              <div class="mLabel">Deal Age</div>
+              <div class="mValue" id="mDealAge">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Deal Path -->
       <div class="bar">
         <button class="disclosure" id="notesToggle" type="button" aria-expanded="false" aria-controls="guidancePanel" title="Toggle guidance">
           <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
@@ -467,23 +589,23 @@
 
   <script>
     /**************************************************************
-     * ✅ FAST LOAD IMPROVEMENTS ADDED
-     * - Instant render using last-known stage cached per itemId
-     * - Background refresh from Make/Monday (authoritative)
-     * - Only re-render if the remote stage differs
+     * OPTIONAL: You can feed the highlights panel via URL params:
+     *   ?leadScore=76&stageAge=10%20days&sinceLast=5%20days&dealAge=121%20days
+     *
+     * Later you can load these from Make/Monday too, but this is
+     * instant + works right now.
      **************************************************************/
 
-    // ✅ PASTE your Make webhook URLs here:
-    const MAKE_SET_STAGE_URL = "https://hook.us1.make.com/92gwsrg3sja4ykamx8qax9tdw6nqemq6"; // <-- your full SET webhook URL
-    const MAKE_GET_STAGE_URL = "https://hook.us1.make.com/mnd1t2736lba22cphjm1qxfdffe1jemy"; // <-- your full GET webhook URL
+    // ✅ PASTE your Make webhook URLs here (optional for deal stage persistence):
+    const MAKE_SET_STAGE_URL = "https://hook.us1.make.com/";
+    const MAKE_GET_STAGE_URL = "https://hook.us1.make.com/";
 
-    // Monday column where stage is stored:
     const MONDAY_STATUS_COLUMN_ID = "status__1"; // Lead Status
 
     const STAGES = [
       { key: "discovery",           label: "Discovery" },
       { key: "dial_na",             label: "Dial NA" },
-      { key: "contacted_nurture",   label: "Contacted-Nuture" },
+      { key: "contacted_nurture",   label: "Contacted-Nuture" },  // label shown
       { key: "interested_selling",  label: "Interested in Selling" },
       { key: "negotiation_review",  label: "Negotiation-Review" },
       { key: "closed",              label: "Closed" }
@@ -544,23 +666,32 @@
       return new URLSearchParams(window.location.search).get(name);
     }
 
-    function escapeHtml(str){
-      return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
+    // --- Highlights DOM ---
+    const mLeadScore = document.getElementById("mLeadScore");
+    const mStageAge = document.getElementById("mStageAge");
+    const mSinceLast = document.getElementById("mSinceLast");
+    const mDealAge = document.getElementById("mDealAge");
+
+    function setMetric(el, val){
+      const v = String(val || "").trim();
+      el.textContent = v.length ? v : "—";
     }
 
-    // --- State ---
+    function hydrateHighlightsFromUrl(){
+      setMetric(mLeadScore, getParam("leadScore"));
+      setMetric(mStageAge, getParam("stageAge"));
+      setMetric(mSinceLast, getParam("sinceLast"));
+      setMetric(mDealAge, getParam("dealAge"));
+    }
+
+    // --- Deal path state ---
     let activeIndex = 0;
-    let isLoadingRemoteStage = false;
     let isSavingRemoteStage = false;
 
     // --- DOM ---
     const el = document.getElementById("dealPath");
     const completeBtn = document.getElementById("completeBtn");
+
     const notesToggle = document.getElementById("notesToggle");
     const panelWrap = document.getElementById("panelWrap");
     const panelStageLabel = document.getElementById("panelStageLabel");
@@ -592,6 +723,15 @@
           <path fill="#ffffff" d="M9.0 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
         </svg>
       `;
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
     }
 
     function renderGuidance(){
@@ -652,10 +792,6 @@
       if(i === prev) return;
 
       activeIndex = i;
-
-      // ✅ instant cache update so next open is fast
-      saveCachedStage();
-
       render();
 
       if(opts.announce){
@@ -663,86 +799,37 @@
         setTimeout(() => showToast(`Status changed successfully. (${label})`), 120);
       }
 
-      window.dispatchEvent(new CustomEvent("dealStageChanged", {
-        detail: {
-          activeIndex,
-          stageKey: STAGES[activeIndex].key,
-          stageLabel: STAGES[activeIndex].label || "Started",
-          previousIndex: prev,
-          occurredAt: new Date().toISOString(),
-          itemId: getParam("itemId"),
-          boardId: getParam("boardId"),
-          userId: getParam("userId")
-        }
-      }));
-
       if(opts.saveRemote){
         saveStageToMonday(prev).catch(()=>{});
       }
     }
 
     function stageIndexFromResponse(data){
+      // Prefer stageKey if present
       if(data?.stageKey){
         const idx = STAGES.findIndex(s => s.key === data.stageKey);
         if(idx >= 0) return idx;
       }
+      // Fallback to stageLabel
       if(data?.stageLabel){
-        const idx = STAGES.findIndex(s => (s.label || "").toLowerCase() === String(data.stageLabel).toLowerCase());
-        if(idx >= 0) return idx;
-      }
-      if(data?.leadStatus){
-        const idx = STAGES.findIndex(s => (s.label || "").toLowerCase() === String(data.leadStatus).toLowerCase());
-        if(idx >= 0) return idx;
+        const target = String(data.stageLabel || "").trim().toLowerCase()
+          .replace(/[\/\-]/g, " ")
+          .replace(/\s+/g, " ");
+        for(let i=0;i<STAGES.length;i++){
+          const cand = String(STAGES[i].label || "").trim().toLowerCase()
+            .replace(/[\/\-]/g, " ")
+            .replace(/\s+/g, " ");
+          if(cand === target) return i;
+        }
       }
       return -1;
     }
 
-    /* ===========================
-       ✅ FAST LOAD: local cache
-       =========================== */
-    function cacheKey(){
-      return "dealpath:lastStage:" + (getParam("itemId") || "unknown");
-    }
-
-    function loadCachedStage(){
-      const cached = localStorage.getItem(cacheKey());
-      if(!cached) return false;
-
-      const idxByKey = STAGES.findIndex(s => s.key === cached);
-      if(idxByKey >= 0){
-        activeIndex = idxByKey;
-        return true;
-      }
-
-      const idxByLabel = STAGES.findIndex(s => (s.label || "").toLowerCase() === String(cached).toLowerCase());
-      if(idxByLabel >= 0){
-        activeIndex = idxByLabel;
-        return true;
-      }
-
-      return false;
-    }
-
-    function saveCachedStage(){
-      try{
-        localStorage.setItem(cacheKey(), STAGES[activeIndex].key);
-      }catch(e){
-        // ignore storage issues
-      }
-    }
-
     async function loadStageFromMonday(){
       const itemId = getParam("itemId");
-      if(!itemId){
-        showToast("Missing itemId in URL. Add ?itemId=###");
-        return;
-      }
-      if(!MAKE_GET_STAGE_URL || MAKE_GET_STAGE_URL === "https://hook.us1.make.com/"){
-        // not configured; don't block UI
-        return;
-      }
+      if(!itemId) return;
+      if(!MAKE_GET_STAGE_URL || MAKE_GET_STAGE_URL.endsWith(".com/")) return; // not configured
 
-      isLoadingRemoteStage = true;
       try{
         const url = new URL(MAKE_GET_STAGE_URL);
         url.searchParams.set("itemId", itemId);
@@ -753,22 +840,16 @@
           headers: { "Accept": "application/json" },
           cache: "no-store"
         });
-
         if(!res.ok) throw new Error("GET stage failed: " + res.status);
+
         const data = await res.json();
-
         const idx = stageIndexFromResponse(data);
-
-        // ✅ only re-render if the server says a different stage
-        if(idx >= 0 && idx !== activeIndex){
+        if(idx >= 0){
           activeIndex = idx;
-          saveCachedStage(); // keep cache in sync with server
           render();
         }
-      } catch (e) {
+      } catch (e){
         console.warn("Could not load remote stage:", e);
-      } finally {
-        isLoadingRemoteStage = false;
       }
     }
 
@@ -777,7 +858,7 @@
       if(!itemId) return;
 
       if(isSavingRemoteStage) return;
-      if(!MAKE_SET_STAGE_URL || MAKE_SET_STAGE_URL === "https://hook.us1.make.com/"){
+      if(!MAKE_SET_STAGE_URL || MAKE_SET_STAGE_URL.endsWith(".com/")){
         showToast("Make SET webhook not configured yet.");
         return;
       }
@@ -802,7 +883,7 @@
           body: JSON.stringify(payload),
           keepalive: true
         });
-      } catch (e) {
+      } catch (e){
         console.warn("Save to Monday failed:", e);
         showToast("Could not save stage. Please retry.");
       } finally {
@@ -825,23 +906,10 @@
       panelWrap.classList.toggle("collapsed", !next);
     });
 
-    // ✅ FAST START:
-    // 1) Load cached stage (instant)
-    // 2) Render immediately
-    // 3) Background refresh from Make/Monday
-    loadCachedStage();
+    // Init
+    hydrateHighlightsFromUrl(); // ✅ loads your metric values from URL params immediately
     render();
-    loadStageFromMonday();
-
-    window.DealPath = {
-      setStageByKey(key){
-        const idx = STAGES.findIndex(s => s.key === key);
-        if(idx >= 0) setActive(idx, { announce: false, saveRemote: true });
-      },
-      getActive(){
-        return { activeIndex, ...STAGES[activeIndex] };
-      }
-    };
+    loadStageFromMonday();      // ✅ loads stage if webhook configured
   </script>
 </body>
 </html>
