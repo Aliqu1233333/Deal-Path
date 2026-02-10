@@ -17,16 +17,16 @@
       --todo-bg: #e6e6e6;
       --todo-fg: #4f4f4f;
 
-      /* Deal Path sizing (DO NOT CHANGE) */
-      --track-h: 44px;
-      --cut: 16px;
-      --radius: 20px;
+      /* ✅ Deal Path slightly smaller */
+      --track-h: 40px;         /* was 44 */
+      --cut: 15px;             /* was 16 */
+      --radius: 18px;          /* was 20 */
       --overlap: 12px;
       --divider: 2px;
 
-      /* Top padding */
-      --embed-pad-top: 10px;
-      --embed-pad-bottom: 16px;
+      /* ✅ tighter embed padding */
+      --embed-pad-top: 10px;   /* you said you lowered to 10 */
+      --embed-pad-bottom: 10px;
       --embed-pad-x: 10px;
       --offset-down: 0px;
 
@@ -40,29 +40,26 @@
       --panel-title: #2e2e2e;
       --panel-muted: #6a6a6a;
 
-      /* ✅ Salesforce-like Highlights */
-      --hl-bg: #f6f8fb;        /* light page header bar */
-      --hl-border: #e6e6e6;
-      --hl-divider: rgba(0,0,0,0.06);
+      /* ✅ Salesforce-like highlights (no “bubble” look) */
+      --hl-bg: transparent;
+      --hl-border: transparent;
+      --hl-divider: rgba(0,0,0,0.08);
       --hl-label: #5f6a7a;
-      --hl-value: #111827;
-      --hl-radius: 12px;
-
-      --hl-icon-bg: #f4b24a;   /* Salesforce-ish yellow tile */
+      --hl-value: #0f172a;
+      --hl-icon-bg: #f4b24a;
       --hl-icon-fg: #ffffff;
 
-      /* ✅ make text a bit bigger */
-      --hl-title-size: 18px;
-      --hl-sub-size: 12.5px;
-      --hl-label-size: 12px;
-      --hl-value-size: 18px;
+      --hl-label-size: 11px;   /* smaller */
+      --hl-value-size: 14px;   /* smaller */
+      --hl-title-size: 14px;   /* smaller */
+      --hl-sub-size: 11px;     /* smaller */
     }
 
     html,body{
       width:100%;
       max-width:100%;
       overflow-x:hidden;
-      min-height: 180px;
+      min-height: 140px;
     }
 
     body{
@@ -90,36 +87,36 @@
       min-width: 0;
       display:flex;
       flex-direction: column;
-      gap: 10px;
     }
 
-    /* ✅ Highlights Panel (Salesforce-like header style) */
+    /* ✅ Highlights panel reworked to be “Salesforce header” style (no big bubble) */
     .highlights{
       width: 100%;
       background: var(--hl-bg);
-      border: 1px solid var(--hl-border);
-      border-radius: var(--hl-radius);
-      overflow:hidden;
+      border: 0;
+      border-radius: 0;
+      overflow: visible;
       box-sizing:border-box;
+      padding: 2px 0 6px 0;
     }
 
     .hlTop{
       display:flex;
       align-items:center;
-      gap: 12px;
-      padding: 12px 14px;
+      gap: 10px;
+      padding: 2px 0 6px 0;
       min-width:0;
     }
 
     .hlIconTile{
-      width: 44px;
-      height: 44px;
+      width: 36px;
+      height: 36px;
       border-radius: 10px;
       background: var(--hl-icon-bg);
       display:grid;
       place-items:center;
       flex: 0 0 auto;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+      box-shadow: none;
     }
 
     .hlTitleWrap{
@@ -127,18 +124,19 @@
       flex: 1 1 auto;
       display:flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 1px;
     }
 
     .hlType{
       font-size: var(--hl-sub-size);
-      font-weight: 700;
+      font-weight: 750;
       letter-spacing: .12px;
       color: var(--hl-label);
       text-transform: uppercase;
       white-space: nowrap;
       overflow:hidden;
       text-overflow: ellipsis;
+      line-height: 1.1;
     }
 
     .hlTitle{
@@ -148,36 +146,30 @@
       white-space: nowrap;
       overflow:hidden;
       text-overflow: ellipsis;
-      line-height: 1.2;
-    }
-
-    .hlRule{
-      height: 1px;
-      background: rgba(0,0,0,0.06);
+      line-height: 1.15;
     }
 
     .hlMetrics{
       display:grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 0;
-      padding: 10px 6px;
-      background: #ffffff; /* metrics strip like SF */
+      padding: 4px 0 8px 0;
+      background: transparent;
     }
 
     .metric{
-      padding: 10px 12px;
+      padding: 6px 10px;
       min-width:0;
       position:relative;
     }
-
     .metric:not(:last-child)::after{
       content:"";
       position:absolute;
-      top: 12px;
+      top: 8px;
       right: 0;
       width: 1px;
-      height: calc(100% - 24px);
-      background: var(--hl-divider);
+      height: calc(100% - 16px);
+      background: rgba(0,0,0,0.06);
     }
 
     .mLabel{
@@ -187,10 +179,11 @@
       white-space: nowrap;
       overflow:hidden;
       text-overflow: ellipsis;
+      line-height: 1.1;
     }
 
     .mValue{
-      margin-top: 6px;
+      margin-top: 4px;
       font-size: var(--hl-value-size);
       font-weight: 850;
       letter-spacing: .1px;
@@ -198,6 +191,7 @@
       white-space: nowrap;
       overflow:hidden;
       text-overflow: ellipsis;
+      line-height: 1.1;
     }
 
     @media (max-width: 860px){
@@ -208,8 +202,16 @@
       }
     }
 
+    /* ✅ grey divider line between highlights + dealpath (Salesforce style) */
+    .sectionDivider{
+      width:100%;
+      height:1px;
+      background: rgba(0,0,0,0.10);
+      margin: 4px 0 10px 0;
+    }
+
     /* ==========================
-       Deal Path (UNCHANGED)
+       Deal Path (kept same, just slightly smaller via vars)
        ========================== */
 
     .bar{
@@ -221,9 +223,9 @@
     }
 
     .disclosure{
-      width: 32px;
-      height: 32px;
-      border-radius: 16px;
+      width: 30px;
+      height: 30px;
+      border-radius: 15px;
       border: 1px solid rgba(0,0,0,0.10);
       background: #ffffff;
       display:grid;
@@ -260,14 +262,14 @@
       align-items:center;
       justify-content:center;
 
-      font-size: 13.5px;
+      font-size: 12.5px;       /* slightly smaller */
       font-weight: 600;
-      letter-spacing: .25px;
+      letter-spacing: .2px;
 
       cursor:pointer;
       outline: none;
       border: 0;
-      padding: 0 12px;
+      padding: 0 10px;         /* slightly smaller */
       background: var(--todo-bg);
       color: var(--todo-fg);
 
@@ -297,7 +299,7 @@
       );
       margin-left: 0;
       justify-content:center;
-      padding-left: 12px;
+      padding-left: 10px;
     }
 
     .stage:last-child{
@@ -328,21 +330,10 @@
       color: var(--done-fg) !important;
     }
 
-    .stage::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.01);
-    }
-    .stage[data-state="active"]::before{
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
-    }
-
     .label{
       display:flex;
       align-items:center;
-      gap: 10px;
+      gap: 8px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -351,9 +342,9 @@
     }
 
     .chk{
-      width: 18px;
-      height: 18px;
-      border-radius: 9px;
+      width: 16px;
+      height: 16px;
+      border-radius: 8px;
       display:grid;
       place-items:center;
       flex: 0 0 auto;
@@ -405,9 +396,9 @@
     }
 
     .cta{
-      height: 32px;
+      height: 30px;            /* slightly smaller */
       padding: 0 10px;
-      border-radius: 16px;
+      border-radius: 15px;
       border: 0;
       cursor:pointer;
       font-size: 12px;
@@ -440,6 +431,7 @@
       .cta{margin-left:auto;}
     }
 
+    /* Guidance panel left as-is */
     .panel{
       margin-top: 8px;
       background: var(--panel-bg);
@@ -561,24 +553,21 @@
   <div class="frame">
     <div class="root" id="root">
 
-      <!-- ✅ UPDATED: Salesforce-like highlights header (no top-right buttons) -->
+      <!-- ✅ Highlights (Salesforce style, no big bubble, plus test title) -->
       <div class="highlights" aria-label="Highlights panel">
         <div class="hlTop">
           <div class="hlIconTile" aria-hidden="true" title="Lead">
-            <!-- crown-ish / lead-ish icon (white) -->
-            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="var(--hl-icon-fg)" d="M5 16l-2-9 6 4 3-6 3 6 6-4-2 9H5zm0 2h14v2H5v-2z"/>
             </svg>
           </div>
 
           <div class="hlTitleWrap">
             <div class="hlType">Lead</div>
-            <!-- optional name shown if you pass ?title=Maria%20Resendez -->
-            <div class="hlTitle" id="hlTitle">—</div>
+            <!-- ✅ test data -->
+            <div class="hlTitle" id="hlTitle">1251 Forester St Houston TX 77011</div>
           </div>
         </div>
-
-        <div class="hlRule"></div>
 
         <div class="hlMetrics">
           <div class="metric">
@@ -600,7 +589,10 @@
         </div>
       </div>
 
-      <!-- Deal Path (UNCHANGED) -->
+      <!-- ✅ single grey divider like Salesforce -->
+      <div class="sectionDivider" aria-hidden="true"></div>
+
+      <!-- Deal Path -->
       <div class="bar">
         <button class="disclosure" id="notesToggle" type="button" aria-expanded="false" aria-controls="guidancePanel" title="Toggle guidance">
           <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
@@ -648,8 +640,8 @@
 
   <script>
     /**************************************************************
-     * OPTIONAL URL PARAMS for instant test data:
-     *   ?title=Maria%20Resendez&leadScore=76&stageAge=10%20days&sinceLast=5%20days&dealAge=121%20days
+     * OPTIONAL URL PARAMS for quick test metrics:
+     *   ?leadScore=76&stageAge=10%20days&sinceLast=5%20days&dealAge=121%20days
      **************************************************************/
 
     const MAKE_SET_STAGE_URL = "https://hook.us1.make.com/";
@@ -678,8 +670,7 @@
       return new URLSearchParams(window.location.search).get(name);
     }
 
-    // --- Highlights DOM ---
-    const hlTitle = document.getElementById("hlTitle");
+    // highlights metrics
     const mLeadScore = document.getElementById("mLeadScore");
     const mStageAge = document.getElementById("mStageAge");
     const mSinceLast = document.getElementById("mSinceLast");
@@ -690,8 +681,7 @@
       el.textContent = v.length ? v : "—";
     }
 
-    function hydrateHighlightsFromUrl(){
-      hlTitle.textContent = (getParam("title") || "—").trim() || "—";
+    function hydrateMetricsFromUrl(){
       setMetric(mLeadScore, getParam("leadScore"));
       setMetric(mStageAge, getParam("stageAge"));
       setMetric(mSinceLast, getParam("sinceLast"));
@@ -916,7 +906,7 @@
     });
 
     // Init
-    hydrateHighlightsFromUrl();
+    hydrateMetricsFromUrl();
     render();
     loadStageFromMonday();
   </script>
