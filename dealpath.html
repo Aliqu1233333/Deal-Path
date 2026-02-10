@@ -17,49 +17,43 @@
       --todo-bg: #e6e6e6;
       --todo-fg: #4f4f4f;
 
-      /* ✅ Deal Path slightly smaller */
-      --track-h: 40px;         /* was 44 */
-      --cut: 15px;             /* was 16 */
-      --radius: 18px;          /* was 20 */
+      /* Deal Path sizing */
+      --track-h: 40px;
+      --cut: 15px;
+      --radius: 18px;
       --overlap: 12px;
       --divider: 2px;
 
-      /* ✅ tighter embed padding */
-      --embed-pad-top: 10px;   /* you said you lowered to 10 */
-      --embed-pad-bottom: 10px;
+      /* ✅ remove top padding (you asked) */
+      --embed-pad-top: 0px;
+      --embed-pad-bottom: 8px;
       --embed-pad-x: 10px;
-      --offset-down: 0px;
 
-      --toast-bg: #bff3ea;
-      --toast-fg: #0d3a33;
-      --toast-shadow: 0 10px 30px rgba(0,0,0,0.10);
-      --toast-radius: 10px;
-
-      --panel-bg: #ffffff;
-      --panel-border: #e6e6e6;
-      --panel-title: #2e2e2e;
-      --panel-muted: #6a6a6a;
-
-      /* ✅ Salesforce-like highlights (no “bubble” look) */
-      --hl-bg: transparent;
-      --hl-border: transparent;
-      --hl-divider: rgba(0,0,0,0.08);
+      /* Highlights */
       --hl-label: #5f6a7a;
       --hl-value: #0f172a;
       --hl-icon-bg: #f4b24a;
       --hl-icon-fg: #ffffff;
 
-      --hl-label-size: 11px;   /* smaller */
-      --hl-value-size: 14px;   /* smaller */
-      --hl-title-size: 14px;   /* smaller */
-      --hl-sub-size: 11px;     /* smaller */
+      --hl-label-size: 11px;
+      --hl-value-size: 14px;
+      --hl-title-size: 16px;   /* ✅ slightly bigger title */
+      --hl-sub-size: 11px;
+
+      /* ✅ tighter spacing under metrics */
+      --hl-metrics-pad-bottom: 2px;
+
+      --toast-bg: #bff3ea;
+      --toast-fg: #0d3a33;
+      --toast-shadow: 0 10px 30px rgba(0,0,0,0.10);
+      --toast-radius: 10px;
     }
 
     html,body{
       width:100%;
       max-width:100%;
       overflow-x:hidden;
-      min-height: 140px;
+      min-height: 120px;
     }
 
     body{
@@ -78,7 +72,6 @@
       display:flex;
       align-items:flex-start;
       justify-content:center;
-      transform: translateY(var(--offset-down));
     }
 
     .root{
@@ -89,15 +82,11 @@
       flex-direction: column;
     }
 
-    /* ✅ Highlights panel reworked to be “Salesforce header” style (no big bubble) */
+    /* Highlights */
     .highlights{
       width: 100%;
-      background: var(--hl-bg);
-      border: 0;
-      border-radius: 0;
-      overflow: visible;
+      padding: 6px 0 0 0; /* ✅ no top padding from body, keep a tiny internal breathing room */
       box-sizing:border-box;
-      padding: 2px 0 6px 0;
     }
 
     .hlTop{
@@ -116,7 +105,6 @@
       display:grid;
       place-items:center;
       flex: 0 0 auto;
-      box-shadow: none;
     }
 
     .hlTitleWrap{
@@ -141,7 +129,7 @@
 
     .hlTitle{
       font-size: var(--hl-title-size);
-      font-weight: 800;
+      font-weight: 850;
       color: #0f172a;
       white-space: nowrap;
       overflow:hidden;
@@ -153,7 +141,7 @@
       display:grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 0;
-      padding: 4px 0 8px 0;
+      padding: 4px 0 var(--hl-metrics-pad-bottom) 0; /* ✅ reduced bottom padding */
       background: transparent;
     }
 
@@ -202,18 +190,15 @@
       }
     }
 
-    /* ✅ grey divider line between highlights + dealpath (Salesforce style) */
+    /* Divider */
     .sectionDivider{
       width:100%;
       height:1px;
       background: rgba(0,0,0,0.10);
-      margin: 4px 0 10px 0;
+      margin: 4px 0 8px 0; /* ✅ tighter so deal path sits higher */
     }
 
-    /* ==========================
-       Deal Path (kept same, just slightly smaller via vars)
-       ========================== */
-
+    /* Deal Path bar */
     .bar{
       width: 100%;
       display:flex;
@@ -262,14 +247,14 @@
       align-items:center;
       justify-content:center;
 
-      font-size: 12.5px;       /* slightly smaller */
+      font-size: 12.5px;
       font-weight: 600;
       letter-spacing: .2px;
 
       cursor:pointer;
       outline: none;
       border: 0;
-      padding: 0 10px;         /* slightly smaller */
+      padding: 0 10px;
       background: var(--todo-bg);
       color: var(--todo-fg);
 
@@ -396,7 +381,7 @@
     }
 
     .cta{
-      height: 30px;            /* slightly smaller */
+      height: 30px;
       padding: 0 10px;
       border-radius: 15px;
       border: 0;
@@ -431,79 +416,50 @@
       .cta{margin-left:auto;}
     }
 
-    /* Guidance panel left as-is */
-    .panel{
-      margin-top: 8px;
-      background: var(--panel-bg);
-      border: 1px solid var(--panel-border);
-      border-radius: 12px;
-      overflow:hidden;
-      box-shadow: none;
-      width:100%;
-      max-width:100%;
-      box-sizing:border-box;
+    /* ✅ Guidance: remove “Stage Guidance” row + bubble. Keep dropdown arrow + content only */
+    .guidance{
+      margin-top: 6px;
+      padding-left: 38px; /* aligns under deal path (accounts for disclosure button width + gap) */
+      padding-right: 0;
+      box-sizing: border-box;
     }
 
-    .panelHeader{
-      padding: 10px 12px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-      min-width: 0;
+    .guidanceWrap{
+      display:grid;
+      grid-template-rows: 1fr;
+      transition: grid-template-rows 220ms ease;
     }
-    .panelTitle{
-      font-weight: 800;
-      color: var(--panel-title);
-      font-size: 12px;
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
+    .guidanceWrap.collapsed{
+      grid-template-rows: 0fr;
     }
-    .panelStage{
-      font-size: 11px;
-      color: var(--panel-muted);
-      font-weight: 650;
-      white-space: nowrap;
+    .guidanceWrap > .guidanceInner{
       overflow:hidden;
-      text-overflow: ellipsis;
-      flex: 0 1 auto;
+      min-height:0;
     }
 
-    .panelBody{
-      padding: 0 12px 12px 12px;
+    .guidanceBody{
+      padding: 8px 0 0 0; /* no bubble, so just light spacing */
       color: #333;
       font-size: 12px;
       line-height: 1.35;
     }
-    .panelBody h4{
-      margin: 8px 0 6px 0;
+    .guidanceBody h4{
+      margin: 0 0 6px 0;
       font-size: 12px;
       font-weight: 800;
+      color: #111827;
     }
-    .panelBody ul{
+    .guidanceBody ul{
       margin: 6px 0 0 18px;
       padding: 0;
     }
-    .panelBody li{
+    .guidanceBody li{
       margin: 4px 0;
       color: #4a4a4a;
       font-weight: 550;
     }
 
-    .panelWrap{
-      display:grid;
-      grid-template-rows: 1fr;
-      transition: grid-template-rows 220ms ease;
-    }
-    .panelWrap.collapsed{
-      grid-template-rows: 0fr;
-    }
-    .panelWrap > .panelInner{
-      overflow:hidden;
-      min-height:0;
-    }
-
+    /* Toast */
     .toast{
       position: fixed;
       top: 16px;
@@ -553,7 +509,7 @@
   <div class="frame">
     <div class="root" id="root">
 
-      <!-- ✅ Highlights (Salesforce style, no big bubble, plus test title) -->
+      <!-- Highlights -->
       <div class="highlights" aria-label="Highlights panel">
         <div class="hlTop">
           <div class="hlIconTile" aria-hidden="true" title="Lead">
@@ -564,7 +520,6 @@
 
           <div class="hlTitleWrap">
             <div class="hlType">Lead</div>
-            <!-- ✅ test data -->
             <div class="hlTitle" id="hlTitle">1251 Forester St Houston TX 77011</div>
           </div>
         </div>
@@ -572,29 +527,28 @@
         <div class="hlMetrics">
           <div class="metric">
             <div class="mLabel">Lead Score</div>
-            <div class="mValue" id="mLeadScore">—</div>
+            <div class="mValue" id="mLeadScore">84</div>
           </div>
           <div class="metric">
             <div class="mLabel">Current Stage Age</div>
-            <div class="mValue" id="mStageAge">—</div>
+            <div class="mValue" id="mStageAge">10 days</div>
           </div>
           <div class="metric">
             <div class="mLabel">Since Last Activity</div>
-            <div class="mValue" id="mSinceLast">—</div>
+            <div class="mValue" id="mSinceLast">2 days</div>
           </div>
           <div class="metric">
             <div class="mLabel">Deal Age</div>
-            <div class="mValue" id="mDealAge">—</div>
+            <div class="mValue" id="mDealAge">85 days</div>
           </div>
         </div>
       </div>
 
-      <!-- ✅ single grey divider like Salesforce -->
       <div class="sectionDivider" aria-hidden="true"></div>
 
       <!-- Deal Path -->
       <div class="bar">
-        <button class="disclosure" id="notesToggle" type="button" aria-expanded="false" aria-controls="guidancePanel" title="Toggle guidance">
+        <button class="disclosure" id="notesToggle" type="button" aria-expanded="false" aria-controls="guidanceArea" title="Toggle guidance">
           <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="#17345b" d="M7.4 9.2 12 13.8l4.6-4.6 1.4 1.4L12 16.6 6 10.6z"/>
           </svg>
@@ -610,15 +564,11 @@
         </button>
       </div>
 
-      <div class="panel" id="guidancePanel">
-        <div class="panelHeader">
-          <div class="panelTitle">Stage Guidance</div>
-          <div class="panelStage" id="panelStageLabel">—</div>
-        </div>
-
-        <div class="panelWrap collapsed" id="panelWrap">
-          <div class="panelInner">
-            <div class="panelBody" id="panelBody"></div>
+      <!-- ✅ NO “Stage Guidance” text + NO bubble, but keep dropdown content -->
+      <div class="guidance" id="guidanceArea">
+        <div class="guidanceWrap collapsed" id="panelWrap">
+          <div class="guidanceInner">
+            <div class="guidanceBody" id="panelBody"></div>
           </div>
         </div>
       </div>
@@ -639,11 +589,6 @@
   </div>
 
   <script>
-    /**************************************************************
-     * OPTIONAL URL PARAMS for quick test metrics:
-     *   ?leadScore=76&stageAge=10%20days&sinceLast=5%20days&dealAge=121%20days
-     **************************************************************/
-
     const MAKE_SET_STAGE_URL = "https://hook.us1.make.com/";
     const MAKE_GET_STAGE_URL = "https://hook.us1.make.com/";
     const MONDAY_STATUS_COLUMN_ID = "status__1";
@@ -658,34 +603,58 @@
     ];
 
     const STAGE_NOTES = {
-      discovery: { title: "Qualify the lead", bullets: ["What is the property address and ownership structure (single / heirs / fractional)?","Why are they considering selling right now?","Is anyone else involved in the decision?"] },
-      dial_na: { title: "Dialing outcomes", bullets: ["Was contact made? If not, confirm best callback window.","Verify phone number(s) and any alternate contacts.","Leave a concise voicemail and set a follow-up date."] },
-      contacted_nurture: { title: "Build rapport + clarify motivation", bullets: ["What problem are they trying to solve (taxes, vacancy, inheritance, repairs)?","What timeline do they want to move on this?","What condition issues should we expect?"] },
-      interested_selling: { title: "Confirm selling intent", bullets: ["What price range are they expecting and why?","Are there liens, taxes due, or title issues we should anticipate?","What would make this a ‘yes’ for them today?"] },
-      negotiation_review: { title: "Numbers + next steps", bullets: ["Confirm payoff amounts, taxes owed, and any required parties to sign.","Align on inspection/verification expectations and timing.","Confirm the exact offer terms before moving forward."] },
-      closed: { title: "Close-out checklist", bullets: ["Confirm signed docs received and parties verified.","Confirm title/closing timeline and contact points.","Capture lessons learned / notes for future deals."] }
+      discovery: {
+        title: "Qualify the lead",
+        bullets: [
+          "What is the property address and ownership structure (single / heirs / fractional)?",
+          "Why are they considering selling right now?",
+          "Is anyone else involved in the decision?"
+        ]
+      },
+      dial_na: {
+        title: "Dialing outcomes",
+        bullets: [
+          "Was contact made? If not, confirm best callback window.",
+          "Verify phone number(s) and any alternate contacts.",
+          "Leave a concise voicemail and set a follow-up date."
+        ]
+      },
+      contacted_nurture: {
+        title: "Build rapport + clarify motivation",
+        bullets: [
+          "What problem are they trying to solve (taxes, vacancy, inheritance, repairs)?",
+          "What timeline do they want to move on this?",
+          "What condition issues should we expect?"
+        ]
+      },
+      interested_selling: {
+        title: "Confirm selling intent",
+        bullets: [
+          "What price range are they expecting and why?",
+          "Are there liens, taxes due, or title issues we should anticipate?",
+          "What would make this a ‘yes’ for them today?"
+        ]
+      },
+      negotiation_review: {
+        title: "Numbers + next steps",
+        bullets: [
+          "Confirm payoff amounts, taxes owed, and any required parties to sign.",
+          "Align on inspection/verification expectations and timing.",
+          "Confirm the exact offer terms before moving forward."
+        ]
+      },
+      closed: {
+        title: "Close-out checklist",
+        bullets: [
+          "Confirm signed docs received and parties verified.",
+          "Confirm title/closing timeline and contact points.",
+          "Capture lessons learned / notes for future deals."
+        ]
+      }
     };
 
     function getParam(name){
       return new URLSearchParams(window.location.search).get(name);
-    }
-
-    // highlights metrics
-    const mLeadScore = document.getElementById("mLeadScore");
-    const mStageAge = document.getElementById("mStageAge");
-    const mSinceLast = document.getElementById("mSinceLast");
-    const mDealAge = document.getElementById("mDealAge");
-
-    function setMetric(el, val){
-      const v = String(val || "").trim();
-      el.textContent = v.length ? v : "—";
-    }
-
-    function hydrateMetricsFromUrl(){
-      setMetric(mLeadScore, getParam("leadScore"));
-      setMetric(mStageAge, getParam("stageAge"));
-      setMetric(mSinceLast, getParam("sinceLast"));
-      setMetric(mDealAge, getParam("dealAge"));
     }
 
     function escapeHtml(str){
@@ -704,7 +673,6 @@
     const completeBtn = document.getElementById("completeBtn");
     const notesToggle = document.getElementById("notesToggle");
     const panelWrap = document.getElementById("panelWrap");
-    const panelStageLabel = document.getElementById("panelStageLabel");
     const panelBody = document.getElementById("panelBody");
 
     const toast = document.getElementById("toast");
@@ -738,8 +706,6 @@
     function renderGuidance(){
       const stage = STAGES[activeIndex];
       const note = STAGE_NOTES[stage.key] || { title: "Notes", bullets: [] };
-
-      panelStageLabel.textContent = stage.label;
 
       const bullets = (note.bullets || []).map(b => `<li>${escapeHtml(b)}</li>`).join("");
       panelBody.innerHTML = `
@@ -905,8 +871,6 @@
       panelWrap.classList.toggle("collapsed", !next);
     });
 
-    // Init
-    hydrateMetricsFromUrl();
     render();
     loadStageFromMonday();
   </script>
