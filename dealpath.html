@@ -6,8 +6,7 @@
   <title>Deal Path</title>
   <style>
     :root{
-      --font: "Salesforce Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-
+      --font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
       --active-bg: #17345b;
       --active-fg: #ffffff;
 
@@ -39,8 +38,8 @@
       --hl-title-size: 17px;
 
       /* ✅ Unbold metrics + modern sizing */
-      --hl-label-size: 11px;
-      --hl-value-size: 14px;
+      --hl-label-size: 12px;
+      --hl-value-size: 15px;
       --hl-value-weight: 600;  /* was 850 */
       --hl-label-weight: 650;  /* modern, not bulky */
 
@@ -120,10 +119,9 @@
       flex: 1 1 auto;
       display:flex;
       flex-direction: column;
-      align-items: center;     /* ✅ centered */
+      align-items: flex-start;     /* ✅ left
       justify-content:center;
       gap: 0;
-      padding-right: 36px;     /* ✅ balances the icon width so visual center is closer */
     }
 
     /* ✅ Remove "LEAD" line entirely */
@@ -137,7 +135,7 @@
       overflow:hidden;
       text-overflow: ellipsis;
       line-height: 1.15;
-      text-align:center;       /* ✅ centered */
+      text-align:left;       /* ✅ centered */
       width: 100%;
     }
 
