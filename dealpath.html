@@ -57,6 +57,12 @@
       --toast-fg: #0d3a33;
       --toast-shadow: 0 10px 30px rgba(0,0,0,0.10);
       --toast-radius: 10px;
+
+      /* ✅ Alert + due indicators */
+      --danger-bg: #5b0f14; /* dark red */
+      --danger-fg: #ffffff;
+      --ok: #16a34a;
+      --overdue: #dc2626;
     }
 
     html,body{
@@ -164,7 +170,8 @@
     }
 
     .mLabel{
-      font-size: var(--hl-label-size);
+      /* ✅ +0.5px */
+      font-size: calc(var(--hl-label-size) + 0.5px);
       font-weight: var(--hl-label-weight);
       color: var(--hl-label);
       white-space: nowrap;
@@ -175,7 +182,8 @@
 
     .mValue{
       margin-top: 3px;
-      font-size: var(--hl-value-size);
+      /* ✅ +0.5px */
+      font-size: calc(var(--hl-value-size) + 0.5px);
       font-weight: var(--hl-value-weight);
       letter-spacing: .1px;
       color: var(--hl-value);
@@ -183,7 +191,35 @@
       overflow:hidden;
       text-overflow: ellipsis;
       line-height: 1.1;
+      display:flex;
+      align-items:center;
+      gap: 6px;
+      min-width:0;
     }
+
+    /* ✅ Stalled Reason dark red when filled */
+    #mStalledReason:not(:empty){
+      background: var(--danger-bg);
+      color: var(--danger-fg);
+      padding: 4px 8px;
+      border-radius: 10px;
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      line-height: 1.1;
+      max-width: 100%;
+    }
+
+    /* ✅ Follow-up indicator icons */
+    .dueIcon{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width: 16px;
+      height: 16px;
+      flex: 0 0 auto;
+    }
+    .dueIcon svg{ width: 16px; height: 16px; display:block; }
 
     @media (max-width: 860px){
       .hlMetrics{ grid-template-columns: 1fr 1fr; }
@@ -527,20 +563,23 @@
 
         <div class="hlMetrics">
           <div class="metric">
-            <div class="mLabel">Lead Score</div>
-            <div class="mValue" id="mLeadScore">84</div>
+            <div class="mLabel">Stalled Reason</div>
+            <div class="mValue" id="mStalledReason">Waiting On Probate</div>
           </div>
           <div class="metric">
-            <div class="mLabel">Current Stage Age</div>
-            <div class="mValue" id="mStageAge">10 days</div>
+            <div class="mLabel">Follow-up Date</div>
+            <div class="mValue">
+              <span id="mFollowUpDate">Feb 15th</span>
+              <span class="dueIcon" id="followUpIcon" aria-hidden="true"></span>
+            </div>
           </div>
           <div class="metric">
-            <div class="mLabel">Since Last Activity</div>
-            <div class="mValue" id="mSinceLast">2 days</div>
+            <div class="mLabel">Next Action Step</div>
+            <div class="mValue" id="mNextActionStep">Put Together Offer</div>
           </div>
           <div class="metric">
-            <div class="mLabel">Deal Age</div>
-            <div class="mValue" id="mDealAge">85 days</div>
+            <div class="mLabel">Heirs Contacted</div>
+            <div class="mValue" id="mHeirsContacted">2 of 5</div>
           </div>
         </div>
       </div>
@@ -870,6 +909,66 @@
       notesToggle.setAttribute("aria-expanded", String(next));
       panelWrap.classList.toggle("collapsed", !next);
     });
+
+    /* ✅ Follow-up date: show green checkbox if future, red circled ! if past */
+    const followUpEl = document.getElementById("mFollowUpDate");
+    const followUpIcon = document.getElementById("followUpIcon");
+
+    function parseLooseDate(text){
+      if(!text) return null;
+      const raw = String(text).trim();
+
+      // Remove ordinal suffixes (1st, 2nd, 3rd, 4th...)
+      const cleaned = raw.replace(/\b(\d{1,2})(st|nd|rd|th)\b/gi, "$1");
+
+      // If no year present, assume current year
+      const hasYear = /\b(19|20)\d{2}\b/.test(cleaned);
+      const withYear = hasYear ? cleaned : (cleaned + " " + new Date().getFullYear());
+
+      const d = new Date(withYear);
+      if(isNaN(d.getTime())) return null;
+      return d;
+    }
+
+    function setFollowUpIndicator(){
+      if(!followUpEl || !followUpIcon) return;
+
+      const d = parseLooseDate(followUpEl.textContent);
+      followUpIcon.innerHTML = "";
+
+      if(!d) return;
+
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const dd = new Date(d);
+      dd.setHours(0,0,0,0);
+
+      if(dd > today){
+        followUpIcon.innerHTML = `
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" fill="var(--ok)"></circle>
+            <path d="M9 12.7 7.2 10.9 5.8 12.3 9 15.5 18.2 6.3 16.8 4.9z" fill="#fff"></path>
+          </svg>
+        `;
+        followUpIcon.setAttribute("aria-label", "Follow-up date is in the future");
+      } else if(dd < today){
+        followUpIcon.innerHTML = `
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" fill="var(--overdue)"></circle>
+            <path d="M11 6h2v9h-2z" fill="#fff"></path>
+            <path d="M11 17h2v2h-2z" fill="#fff"></path>
+          </svg>
+        `;
+        followUpIcon.setAttribute("aria-label", "Follow-up date is overdue");
+      }
+    }
+
+    // Run once + re-run if CRM updates the field
+    setFollowUpIndicator();
+    if(followUpEl){
+      const obs = new MutationObserver(() => setFollowUpIndicator());
+      obs.observe(followUpEl, { childList: true, characterData: true, subtree: true });
+    }
 
     render();
     loadStageFromMonday();
