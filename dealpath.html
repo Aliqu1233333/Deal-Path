@@ -24,25 +24,32 @@
       --overlap: 12px;
       --divider: 2px;
 
-      /* ✅ remove top padding (you asked) */
+      /* Embed padding */
       --embed-pad-top: 0px;
       --embed-pad-bottom: 8px;
       --embed-pad-x: 10px;
 
       /* Highlights */
-      --hl-label: #5f6a7a;
-      --hl-value: #0f172a;
+      --hl-label: #667085;     /* softer / modern */
+      --hl-value: #111827;
       --hl-icon-bg: #f4b24a;
       --hl-icon-fg: #ffffff;
 
+      /* Slightly larger title */
+      --hl-title-size: 17px;
+
+      /* ✅ Unbold metrics + modern sizing */
       --hl-label-size: 11px;
       --hl-value-size: 14px;
-      --hl-title-size: 16px;   /* ✅ slightly bigger title */
-      --hl-sub-size: 11px;
+      --hl-value-weight: 600;  /* was 850 */
+      --hl-label-weight: 650;  /* modern, not bulky */
 
-      /* ✅ tighter spacing under metrics */
-      --hl-metrics-pad-bottom: 2px;
+      /* ✅ tighter spacing between title and metrics */
+      --hl-top-bottom-pad: 4px;     /* was 6px */
+      --hl-metrics-pad-top: 2px;    /* was 4px */
+      --hl-metrics-pad-bottom: 0px; /* was 2px */
 
+      /* Toast */
       --toast-bg: #bff3ea;
       --toast-fg: #0d3a33;
       --toast-shadow: 0 10px 30px rgba(0,0,0,0.10);
@@ -85,7 +92,7 @@
     /* Highlights */
     .highlights{
       width: 100%;
-      padding: 6px 0 0 0; /* ✅ no top padding from body, keep a tiny internal breathing room */
+      padding: 4px 0 0 0;
       box-sizing:border-box;
     }
 
@@ -93,7 +100,7 @@
       display:flex;
       align-items:center;
       gap: 10px;
-      padding: 2px 0 6px 0;
+      padding: 2px 0 var(--hl-top-bottom-pad) 0;
       min-width:0;
     }
 
@@ -107,41 +114,38 @@
       flex: 0 0 auto;
     }
 
+    /* ✅ Center the address relative to the icon+title row */
     .hlTitleWrap{
       min-width:0;
       flex: 1 1 auto;
       display:flex;
       flex-direction: column;
-      gap: 1px;
+      align-items: center;     /* ✅ centered */
+      justify-content:center;
+      gap: 0;
+      padding-right: 36px;     /* ✅ balances the icon width so visual center is closer */
     }
 
-    .hlType{
-      font-size: var(--hl-sub-size);
-      font-weight: 750;
-      letter-spacing: .12px;
-      color: var(--hl-label);
-      text-transform: uppercase;
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
-      line-height: 1.1;
-    }
+    /* ✅ Remove "LEAD" line entirely */
+    .hlType{ display:none; }
 
     .hlTitle{
       font-size: var(--hl-title-size);
-      font-weight: 850;
+      font-weight: 800;
       color: #0f172a;
       white-space: nowrap;
       overflow:hidden;
       text-overflow: ellipsis;
       line-height: 1.15;
+      text-align:center;       /* ✅ centered */
+      width: 100%;
     }
 
     .hlMetrics{
       display:grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 0;
-      padding: 4px 0 var(--hl-metrics-pad-bottom) 0; /* ✅ reduced bottom padding */
+      padding: var(--hl-metrics-pad-top) 0 var(--hl-metrics-pad-bottom) 0;
       background: transparent;
     }
 
@@ -162,7 +166,7 @@
 
     .mLabel{
       font-size: var(--hl-label-size);
-      font-weight: 750;
+      font-weight: var(--hl-label-weight);
       color: var(--hl-label);
       white-space: nowrap;
       overflow:hidden;
@@ -171,9 +175,9 @@
     }
 
     .mValue{
-      margin-top: 4px;
+      margin-top: 3px; /* slightly tighter */
       font-size: var(--hl-value-size);
-      font-weight: 850;
+      font-weight: var(--hl-value-weight); /* ✅ unboldened */
       letter-spacing: .1px;
       color: var(--hl-value);
       white-space: nowrap;
@@ -188,6 +192,7 @@
       .metric:nth-child(1), .metric:nth-child(2){
         border-bottom: 1px solid rgba(0,0,0,0.06);
       }
+      .hlTitleWrap{ padding-right: 0; } /* no balancing needed when wrapped */
     }
 
     /* Divider */
@@ -195,7 +200,7 @@
       width:100%;
       height:1px;
       background: rgba(0,0,0,0.10);
-      margin: 4px 0 8px 0; /* ✅ tighter so deal path sits higher */
+      margin: 4px 0 8px 0;
     }
 
     /* Deal Path bar */
@@ -416,10 +421,10 @@
       .cta{margin-left:auto;}
     }
 
-    /* ✅ Guidance: remove “Stage Guidance” row + bubble. Keep dropdown arrow + content only */
+    /* Guidance: no header/bubble, keep content only */
     .guidance{
       margin-top: 6px;
-      padding-left: 38px; /* aligns under deal path (accounts for disclosure button width + gap) */
+      padding-left: 38px;
       padding-right: 0;
       box-sizing: border-box;
     }
@@ -438,7 +443,7 @@
     }
 
     .guidanceBody{
-      padding: 8px 0 0 0; /* no bubble, so just light spacing */
+      padding: 8px 0 0 0;
       color: #333;
       font-size: 12px;
       line-height: 1.35;
@@ -519,7 +524,6 @@
           </div>
 
           <div class="hlTitleWrap">
-            <div class="hlType">Lead</div>
             <div class="hlTitle" id="hlTitle">1251 Forester St Houston TX 77011</div>
           </div>
         </div>
@@ -564,7 +568,6 @@
         </button>
       </div>
 
-      <!-- ✅ NO “Stage Guidance” text + NO bubble, but keep dropdown content -->
       <div class="guidance" id="guidanceArea">
         <div class="guidanceWrap collapsed" id="panelWrap">
           <div class="guidanceInner">
