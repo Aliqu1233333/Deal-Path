@@ -6,7 +6,9 @@
   <title>Deal Path</title>
   <style>
     :root{
+      /* ✅ Modern, clean UI sans stack (Salesforce-ish without relying on SF Sans being installed) */
       --font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+
       --active-bg: #17345b;
       --active-fg: #ffffff;
 
@@ -29,24 +31,26 @@
       --embed-pad-x: 10px;
 
       /* Highlights */
-      --hl-label: #667085;     /* softer / modern */
+      --hl-label: #667085;
       --hl-value: #111827;
+
       --hl-icon-bg: #f4b24a;
       --hl-icon-fg: #ffffff;
 
-      /* Slightly larger title */
+      /* ✅ Deal address size */
       --hl-title-size: 17px;
+      --hl-title-weight: 750;
 
-      /* ✅ Unbold metrics + modern sizing */
-      --hl-label-size: 12px;
+      /* ✅ Metrics: slightly larger (+1pt) */
+      --hl-label-size: 11px;
       --hl-value-size: 15px;
-      --hl-value-weight: 600;  /* was 850 */
-      --hl-label-weight: 650;  /* modern, not bulky */
+      --hl-value-weight: 600;
+      --hl-label-weight: 650;
 
-      /* ✅ tighter spacing between title and metrics */
-      --hl-top-bottom-pad: 4px;     /* was 6px */
-      --hl-metrics-pad-top: 2px;    /* was 4px */
-      --hl-metrics-pad-bottom: 0px; /* was 2px */
+      /* tighter spacing */
+      --hl-top-bottom-pad: 4px;
+      --hl-metrics-pad-top: 2px;
+      --hl-metrics-pad-bottom: 0px;
 
       /* Toast */
       --toast-bg: #bff3ea;
@@ -113,29 +117,26 @@
       flex: 0 0 auto;
     }
 
-    /* ✅ Center the address relative to the icon+title row */
+    /* ✅ LEFT aligned address (no centering hacks) */
     .hlTitleWrap{
       min-width:0;
       flex: 1 1 auto;
       display:flex;
       flex-direction: column;
-      align-items: flex-start;     /* ✅ left
+      align-items: flex-start;
       justify-content:center;
       gap: 0;
     }
 
-    /* ✅ Remove "LEAD" line entirely */
-    .hlType{ display:none; }
-
     .hlTitle{
       font-size: var(--hl-title-size);
-      font-weight: 800;
+      font-weight: var(--hl-title-weight);
       color: #0f172a;
       white-space: nowrap;
       overflow:hidden;
       text-overflow: ellipsis;
       line-height: 1.15;
-      text-align:left;       /* ✅ centered */
+      text-align:left;
       width: 100%;
     }
 
@@ -173,9 +174,9 @@
     }
 
     .mValue{
-      margin-top: 3px; /* slightly tighter */
+      margin-top: 3px;
       font-size: var(--hl-value-size);
-      font-weight: var(--hl-value-weight); /* ✅ unboldened */
+      font-weight: var(--hl-value-weight);
       letter-spacing: .1px;
       color: var(--hl-value);
       white-space: nowrap;
@@ -190,7 +191,6 @@
       .metric:nth-child(1), .metric:nth-child(2){
         border-bottom: 1px solid rgba(0,0,0,0.06);
       }
-      .hlTitleWrap{ padding-right: 0; } /* no balancing needed when wrapped */
     }
 
     /* Divider */
@@ -423,7 +423,6 @@
     .guidance{
       margin-top: 6px;
       padding-left: 38px;
-      padding-right: 0;
       box-sizing: border-box;
     }
 
