@@ -113,11 +113,18 @@
       width: 34px;
       height: 34px;
       border-radius: 8px;
-      background: var(--sf-lead-blue);
+      background: transparent;
       display:grid;
       place-items:center;
       flex: 0 0 auto;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+      box-shadow: none;
+    }
+
+    .hlIconTile img{
+      width: 34px;
+      height: 34px;
+      display:block;
+      object-fit: contain;
     }
 
     .hlTitle{
@@ -532,7 +539,7 @@
         <!-- ✅ Single-line header (Salesforce-like) -->
         <div class="hlTop">
           <div class="hlIconTile" aria-hidden="true" title="Lead">
-            <img src="lead icon recordpage.png" width="18" height="18" alt="" aria-hidden="true" />
+            <img src="lead icon recordpage.png" alt="" aria-hidden="true" />
           </div>
 
           <div class="hlTitle" id="hlTitle">1251 Forester St Houston TX 77011</div>
