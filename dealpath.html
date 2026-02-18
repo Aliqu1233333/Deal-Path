@@ -101,75 +101,79 @@
     /* Highlights */
     .highlights{
       width: 100%;
-      padding: 4px 0 0 0;
+      padding: 6px 0 0 0;
       box-sizing:border-box;
     }
 
-    .hlTop{
-      display:flex;
-      align-items:center;
-      gap: 10px;
-      padding: 2px 0 var(--hl-top-bottom-pad) 0;
-      min-width:0;
+    /* ✅ NEW: Salesforce-style header alignment (icon + eyebrow + title) */
+    .hlHeader{
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr);
+      column-gap: 12px;
+      align-items: center;
+      padding: 2px 0 6px 0;
     }
 
     .hlIconTile{
       width: 36px;
       height: 36px;
-      border-radius: 10px;
+      border-radius: 8px; /* slightly squarer like SF */
       background: var(--hl-icon-bg);
       display:grid;
       place-items:center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.10);
       flex: 0 0 auto;
     }
 
-    /* ✅ LEFT aligned address (no centering hacks) */
-    .hlTitleWrap{
-      min-width:0;
-      flex: 1 1 auto;
+    .hlHeaderText{
+      min-width: 0;
       display:flex;
       flex-direction: column;
-      align-items: flex-start;
-      justify-content:center;
-      gap: 0;
+      gap: 2px;
     }
 
+    .hlEyebrow{
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: .02em;
+      color: #6b7280;
+      line-height: 1.1;
+    }
+
+    /* ✅ Tighter title like Salesforce record header */
     .hlTitle{
-      font-size: var(--hl-title-size);
+      font-size: 20px;
       font-weight: var(--hl-title-weight);
       color: #0f172a;
       white-space: nowrap;
       overflow:hidden;
       text-overflow: ellipsis;
-      line-height: 1.15;
+      line-height: 1.2;
       text-align:left;
       width: 100%;
     }
 
+    /* ✅ Metrics aligned under the title start */
     .hlMetrics{
+      margin-left: calc(36px + 12px);
       display:grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0;
-      padding: var(--hl-metrics-pad-top) 0 var(--hl-metrics-pad-bottom) 0;
+      gap: 18px;
+      padding: 6px 0 0 0;
       background: transparent;
     }
 
     .metric{
-      padding: 6px 10px;
+      padding: 0;
       min-width:0;
       position:relative;
     }
+
+    /* ✅ Remove vertical dividers (caused uneven rhythm) */
     .metric:not(:last-child)::after{
-      content:"";
-      position:absolute;
-      top: 8px;
-      right: 0;
-      width: 1px;
-      height: calc(100% - 16px);
-      background: rgba(0,0,0,0.06);
+      display:none;
     }
 
-    /* ✅ back to original sizing */
     .mLabel{
       font-size: var(--hl-label-size);
       font-weight: var(--hl-label-weight);
@@ -181,15 +185,15 @@
     }
 
     .mValue{
-      margin-top: 3px;
-      font-size: var(--hl-value-size);
-      font-weight: var(--hl-value-weight);
+      margin-top: 4px;
+      font-size: 15px;
+      font-weight: 650;
       letter-spacing: .1px;
       color: var(--hl-value);
       white-space: nowrap;
       overflow:hidden;
       text-overflow: ellipsis;
-      line-height: 1.1;
+      line-height: 1.2;
       display:flex;
       align-items:center;
       gap: 6px;
@@ -230,10 +234,6 @@
 
     @media (max-width: 860px){
       .hlMetrics{ grid-template-columns: 1fr 1fr; }
-      .metric:nth-child(2)::after{ display:none; }
-      .metric:nth-child(1), .metric:nth-child(2){
-        border-bottom: 1px solid rgba(0,0,0,0.06);
-      }
     }
 
     /* Divider */
@@ -556,14 +556,16 @@
 
       <!-- Highlights -->
       <div class="highlights" aria-label="Highlights panel">
-        <div class="hlTop">
+
+        <div class="hlHeader">
           <div class="hlIconTile" aria-hidden="true" title="Lead">
             <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="var(--hl-icon-fg)" d="M5 16l-2-9 6 4 3-6 3 6 6-4-2 9H5zm0 2h14v2H5v-2z"/>
             </svg>
           </div>
 
-          <div class="hlTitleWrap">
+          <div class="hlHeaderText">
+            <div class="hlEyebrow">Opportunity</div>
             <div class="hlTitle" id="hlTitle">1251 Forester St Houston TX 77011</div>
           </div>
         </div>
