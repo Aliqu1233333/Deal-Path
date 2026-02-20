@@ -98,6 +98,8 @@
       width: 100%;
       padding: 6px 0 0 0;
       box-sizing:border-box;
+      /* slightly tighter bottom spacing, so the bar sits a touch closer */
+      margin-bottom: 6px;
     }
 
     /* One clean single-line record header: [icon] [title] */
@@ -216,14 +218,6 @@
       .hlMetrics{ grid-template-columns: 1fr 1fr; }
     }
 
-    /* Divider */
-    .sectionDivider{
-      width:100%;
-      height:1px;
-      background: rgba(0,0,0,0.10);
-      margin: 10px 0 8px 0;
-    }
-
     /* ===== Deal Path bar (unchanged) ===== */
     .bar{
       width: 100%;
@@ -231,6 +225,10 @@
       align-items:center;
       gap: 8px;
       min-width: 0;
+
+      /* Replaces the removed divider's spacing, but slightly tighter.
+         This will NOT push the bar lower than before (it will be the same or a bit higher). */
+      margin-top: 6px;
     }
 
     .disclosure{
@@ -582,7 +580,7 @@
         </div>
       </div>
 
-      <div class="sectionDivider" aria-hidden="true"></div>
+      <!-- ✅ Divider removed -->
 
       <!-- Deal Path -->
       <div class="bar">
