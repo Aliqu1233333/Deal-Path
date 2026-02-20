@@ -37,13 +37,13 @@
       /* Salesforce-ish Lead tile color */
       --sf-lead-blue: #0176d3;
 
-      /* Header */
-      --hl-title-size: 21.5px;
+      /* Header (⬆️ +0.5pt-ish) */
+      --hl-title-size: 22.2px;
       --hl-title-weight: 750;
 
-      /* Metrics */
-      --hl-label-size: 12px;
-      --hl-value-size: 15px;
+      /* Metrics (⬆️ +0.5pt-ish) */
+      --hl-label-size: 12.7px;
+      --hl-value-size: 15.7px;
       --hl-value-weight: 650;
       --hl-label-weight: 650;
 
@@ -544,6 +544,14 @@
         </div>
 
         <div class="hlMetrics">
+
+          <!-- ✅ ORDER: Stage Age - Stalled Reason - Follow-up Date - Next Action Step -->
+
+          <div class="metric">
+            <div class="mLabel">Stage Age</div>
+            <div class="mValue" id="mHeirsContacted">19 Days</div>
+          </div>
+
           <div class="metric">
             <div class="mLabel">Stalled Reason</div>
             <div class="mValue">
@@ -573,10 +581,6 @@
             <div class="mValue" id="mNextActionStep">Put Together Offer</div>
           </div>
 
-          <div class="metric">
-            <div class="mLabel">Stage Age</div>
-            <div class="mValue" id="mHeirsContacted">19 Days</div>
-          </div>
         </div>
       </div>
 
