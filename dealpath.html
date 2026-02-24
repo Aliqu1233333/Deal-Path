@@ -869,6 +869,7 @@ let activeIndex = 0;
         const payload = {
           cachedAt: new Date().toISOString(),
           data: {
+            address: (typeof data?.address === "string") ? data.address : ((typeof data?.title === "string") ? data.title : ""),
             title: (typeof data?.title === "string") ? data.title : "",
             stageKey: data?.stageKey,
             stageLabel: data?.stageLabel,
@@ -883,7 +884,18 @@ let activeIndex = 0;
       }catch(e){}
     }
 
-    function showLoading(on, text){
+    
+    function normalizeText(v){
+      if(v === null || v === undefined) return "--";
+      const s = String(v).trim();
+      return s ? s : "--";
+    }
+    function setText(id, v){
+      const el = document.getElementById(id);
+      if(el) el.textContent = normalizeText(v);
+    }
+
+function showLoading(on, text){
       const el = document.getElementById("hlLoading");
       const tx = document.getElementById("hlLoadingText");
       if(!el) return;
@@ -905,29 +917,18 @@ let activeIndex = 0;
         render();
       }
 
-      // Title (optional)
-      if(typeof data?.title === "string" && data.title.trim()){
+      // Title / Address (optional)
+      {
+        const addr = (typeof data?.address === "string") ? data.address : ((typeof data?.title === "string") ? data.title : "");
         const t = document.getElementById("hlTitle");
-        if(t) t.textContent = data.title;
+        if(t) t.textContent = normalizeText(addr);
       }
 
       // Metrics (optional)
-      if(typeof data?.stageAge === "string"){
-        const elAge = document.getElementById("mHeirsContacted");
-        if(elAge) elAge.textContent = data.stageAge;
-      }
-      if(typeof data?.stalledReason === "string"){
-        const elStall = document.getElementById("mStalledReason");
-        if(elStall) elStall.textContent = data.stalledReason;
-      }
-      if(typeof data?.followUpDate === "string"){
-        const elF = document.getElementById("mFollowUpDate");
-        if(elF) elF.textContent = data.followUpDate;
-      }
-      if(typeof data?.nextActionStep === "string"){
-        const elN = document.getElementById("mNextActionStep");
-        if(elN) elN.textContent = data.nextActionStep;
-      }
+      setText("mHeirsContacted", data?.stageAge);
+      setText("mStalledReason", data?.stalledReason);
+      setText("mFollowUpDate", data?.followUpDate);
+      setText("mNextActionStep", data?.nextActionStep);
 
       // Recompute follow-up icon after any update
       setFollowUpIndicator();
@@ -1080,6 +1081,11 @@ let activeIndex = 0;
     }
 
     render();
+    // Ensure placeholders show dashes immediately if empty
+    ["mHeirsContacted","mStalledReason","mFollowUpDate","mNextActionStep"].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) setText(id, el.textContent);
+    });
     loadStageFromMonday();
   </script>
 </body>
