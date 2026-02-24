@@ -628,8 +628,8 @@
   </div>
 
   <script>
-    const MAKE_SET_STAGE_URL = "https://hook.us1.make.com/";
-    const MAKE_GET_STAGE_URL = "https://hook.us1.make.com/";
+    const MAKE_SET_STAGE_URL = "https://hook.us1.make.com/92gwsrg3sja4ykamx8qax9tdw6nqemq6";
+    const MAKE_GET_STAGE_URL = "https://hook.us1.make.com/mnd1t2736lba22cphjm1qxfdffe1jemy";
     const MONDAY_STATUS_COLUMN_ID = "status__1";
 
     const STAGES = [
@@ -687,7 +687,16 @@
         .replaceAll("'","&#039;");
     }
 
-    let activeIndex = 0;
+    
+    function isWebhookConfigured(url){
+      if(!url) return false;
+      const u = String(url);
+      if(u.endsWith(".com/")) return false;
+      if(u.includes("REPLACE_WITH_SECOND_WEBHOOK")) return false;
+      return true;
+    }
+
+let activeIndex = 0;
     let isSavingRemoteStage = false;
 
     const el = document.getElementById("dealPath");
@@ -794,8 +803,14 @@
         const idx = STAGES.findIndex(s => s.key === data.stageKey);
         if(idx >= 0) return idx;
       }
-      if(data?.stageLabel){
-        const target = String(data.stageLabel || "").trim().toLowerCase()
+      if(data?.leadStatus){
+        const idx = STAGES.findIndex(s => s.key === data.leadStatus);
+        if(idx >= 0) return idx;
+      }
+      if(data?.stageLabel || data?.leadStatusLabel){
+        const stageLabel = data?.stageLabel ?? data?.leadStatusLabel;
+
+        const target = String(stageLabel || "").trim().toLowerCase()
           .replace(/[\/\-]/g, " ")
           .replace(/\s+/g, " ");
         for(let i=0;i<STAGES.length;i++){
@@ -810,29 +825,62 @@
 
     async function loadStageFromMonday(){
       const itemId = getParam("itemId");
+      const boardId = getParam("boardId");
       if(!itemId) return;
-      if(!MAKE_GET_STAGE_URL || MAKE_GET_STAGE_URL.endsWith(".com/")) return;
+      if(!isWebhookConfigured(MAKE_GET_STAGE_URL)) return;
 
       try{
         const url = new URL(MAKE_GET_STAGE_URL);
-        url.searchParams.set("itemId", itemId);
-        url.searchParams.set("columnId", MONDAY_STATUS_COLUMN_ID);
+        url.searchParams.set("itemId", String(itemId));
+        if(boardId) url.searchParams.set("boardId", String(boardId));
+        const userId = getParam("userId");
+        if(userId) url.searchParams.set("userId", String(userId));
 
         const res = await fetch(url.toString(), {
           method: "GET",
           headers: { "Accept": "application/json" },
           cache: "no-store"
         });
-        if(!res.ok) throw new Error("GET stage failed: " + res.status);
+        if(!res.ok) throw new Error("GET fields failed: " + res.status);
 
         const data = await res.json();
+
+        // Lead Status / Stage
         const idx = stageIndexFromResponse(data);
         if(idx >= 0){
           activeIndex = idx;
           render();
         }
+
+        // Title (optional)
+        if(typeof data?.title === "string" && data.title.trim()){
+          const t = document.getElementById("hlTitle");
+          if(t) t.textContent = data.title;
+        }
+
+        // Metrics (optional)
+        if(typeof data?.stageAge === "string"){
+          const elAge = document.getElementById("mHeirsContacted");
+          if(elAge) elAge.textContent = data.stageAge;
+        }
+        if(typeof data?.stalledReason === "string"){
+          const elStall = document.getElementById("mStalledReason");
+          if(elStall) elStall.textContent = data.stalledReason;
+        }
+        if(typeof data?.followUpDate === "string"){
+          const elF = document.getElementById("mFollowUpDate");
+          if(elF) elF.textContent = data.followUpDate;
+        }
+        if(typeof data?.nextActionStep === "string"){
+          const elN = document.getElementById("mNextActionStep");
+          if(elN) elN.textContent = data.nextActionStep;
+        }
+
+        // Recompute follow-up icon after any update
+        setFollowUpIndicator();
+
       } catch (e){
-        console.warn("Could not load remote stage:", e);
+        console.warn("Could not load remote fields:", e);
       }
     }
 
@@ -841,7 +889,7 @@
       if(!itemId) return;
 
       if(isSavingRemoteStage) return;
-      if(!MAKE_SET_STAGE_URL || MAKE_SET_STAGE_URL.endsWith(".com/")){
+      if(!isWebhookConfigured(MAKE_SET_STAGE_URL)){
         showToast("Make SET webhook not configured yet.");
         return;
       }
