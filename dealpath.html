@@ -525,6 +525,27 @@
       transition: background 120ms ease;
     }
     .toast .x:hover{ background: rgba(0,0,0,0.06); }
+  
+    .hlLoading{
+      margin-left:auto;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      color:#64748b;
+      white-space:nowrap;
+    }
+    .spinner{
+      width:12px;
+      height:12px;
+      border:2px solid rgba(100,116,139,.35);
+      border-top-color: rgba(100,116,139,1);
+      border-radius:50%;
+      animation: spin .8s linear infinite;
+      flex:0 0 auto;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
   </style>
 </head>
 
@@ -541,6 +562,10 @@
           </div>
 
           <div class="hlTitle" id="hlTitle">1251 Forester St Houston TX 77011</div>
+          <div class="hlLoading" id="hlLoading" style="display:none" aria-live="polite">
+            <span class="spinner" aria-hidden="true"></span>
+            <span id="hlLoadingText">Loading…</span>
+          </div>
         </div>
 
         <div class="hlMetrics">
@@ -549,7 +574,7 @@
 
           <div class="metric">
             <div class="mLabel">Stage Age</div>
-            <div class="mValue" id="mHeirsContacted">19 Days</div>
+            <div class="mValue" id="mHeirsContacted"></div>
           </div>
 
           <div class="metric">
@@ -563,7 +588,7 @@
                     <path d="M11 17h2v2h-2z" fill="#fff"></path>
                   </svg>
                 </span>
-                <span id="mStalledReason">Waiting On Probate</span>
+                <span id="mStalledReason"></span>
               </span>
             </div>
           </div>
@@ -571,14 +596,14 @@
           <div class="metric">
             <div class="mLabel">Follow-up Date</div>
             <div class="mValue">
-              <span id="mFollowUpDate">Feb 15th</span>
+              <span id="mFollowUpDate"></span>
               <span class="dueIcon" id="followUpIcon" aria-hidden="true"></span>
             </div>
           </div>
 
           <div class="metric">
             <div class="mLabel">Next Action Step</div>
-            <div class="mValue" id="mNextActionStep">Put Together Offer</div>
+            <div class="mValue" id="mNextActionStep"></div>
           </div>
 
         </div>
@@ -822,12 +847,106 @@ let activeIndex = 0;
       }
       return -1;
     }
+    function cacheKey(itemId, boardId){
+      return "dealpath_cache::" + (boardId ? String(boardId) : "") + "::" + String(itemId);
+    }
+
+    function readCache(itemId, boardId){
+      try{
+        const raw = localStorage.getItem(cacheKey(itemId, boardId));
+        if(!raw) return null;
+        const obj = JSON.parse(raw);
+        if(!obj || typeof obj !== "object") return null;
+        if(!obj.data || typeof obj.data !== "object") return null;
+        return obj;
+      }catch(e){
+        return null;
+      }
+    }
+
+    function writeCache(itemId, boardId, data){
+      try{
+        const payload = {
+          cachedAt: new Date().toISOString(),
+          data: {
+            title: (typeof data?.title === "string") ? data.title : "",
+            stageKey: data?.stageKey,
+            stageLabel: data?.stageLabel,
+            leadStatusLabel: data?.leadStatusLabel,
+            stageAge: (typeof data?.stageAge === "string") ? data.stageAge : "",
+            stalledReason: (typeof data?.stalledReason === "string") ? data.stalledReason : "",
+            followUpDate: (typeof data?.followUpDate === "string") ? data.followUpDate : "",
+            nextActionStep: (typeof data?.nextActionStep === "string") ? data.nextActionStep : ""
+          }
+        };
+        localStorage.setItem(cacheKey(itemId, boardId), JSON.stringify(payload));
+      }catch(e){}
+    }
+
+    function showLoading(on, text){
+      const el = document.getElementById("hlLoading");
+      const tx = document.getElementById("hlLoadingText");
+      if(!el) return;
+      if(on){
+        if(tx && typeof text === "string") tx.textContent = text;
+        el.style.display = "flex";
+      }else{
+        el.style.display = "none";
+      }
+    }
+
+    function applyFieldsFromData(data){
+      if(!data) return;
+
+      // Lead Status / Stage
+      const idx = stageIndexFromResponse(data);
+      if(idx >= 0){
+        activeIndex = idx;
+        render();
+      }
+
+      // Title (optional)
+      if(typeof data?.title === "string" && data.title.trim()){
+        const t = document.getElementById("hlTitle");
+        if(t) t.textContent = data.title;
+      }
+
+      // Metrics (optional)
+      if(typeof data?.stageAge === "string"){
+        const elAge = document.getElementById("mHeirsContacted");
+        if(elAge) elAge.textContent = data.stageAge;
+      }
+      if(typeof data?.stalledReason === "string"){
+        const elStall = document.getElementById("mStalledReason");
+        if(elStall) elStall.textContent = data.stalledReason;
+      }
+      if(typeof data?.followUpDate === "string"){
+        const elF = document.getElementById("mFollowUpDate");
+        if(elF) elF.textContent = data.followUpDate;
+      }
+      if(typeof data?.nextActionStep === "string"){
+        const elN = document.getElementById("mNextActionStep");
+        if(elN) elN.textContent = data.nextActionStep;
+      }
+
+      // Recompute follow-up icon after any update
+      setFollowUpIndicator();
+    }
+
 
     async function loadStageFromMonday(){
       const itemId = getParam("itemId");
       const boardId = getParam("boardId");
       if(!itemId) return;
       if(!isWebhookConfigured(MAKE_GET_STAGE_URL)) return;
+
+      // ✅ Speed: paint immediately from local cache (if available), then refresh in background
+      const cached = readCache(itemId, boardId);
+      if(cached && cached.data){
+        applyFieldsFromData(cached.data);
+      }
+
+      showLoading(true, cached ? "Syncing…" : "Loading…");
 
       try{
         const url = new URL(MAKE_GET_STAGE_URL);
@@ -845,42 +964,14 @@ let activeIndex = 0;
 
         const data = await res.json();
 
-        // Lead Status / Stage
-        const idx = stageIndexFromResponse(data);
-        if(idx >= 0){
-          activeIndex = idx;
-          render();
-        }
-
-        // Title (optional)
-        if(typeof data?.title === "string" && data.title.trim()){
-          const t = document.getElementById("hlTitle");
-          if(t) t.textContent = data.title;
-        }
-
-        // Metrics (optional)
-        if(typeof data?.stageAge === "string"){
-          const elAge = document.getElementById("mHeirsContacted");
-          if(elAge) elAge.textContent = data.stageAge;
-        }
-        if(typeof data?.stalledReason === "string"){
-          const elStall = document.getElementById("mStalledReason");
-          if(elStall) elStall.textContent = data.stalledReason;
-        }
-        if(typeof data?.followUpDate === "string"){
-          const elF = document.getElementById("mFollowUpDate");
-          if(elF) elF.textContent = data.followUpDate;
-        }
-        if(typeof data?.nextActionStep === "string"){
-          const elN = document.getElementById("mNextActionStep");
-          if(elN) elN.textContent = data.nextActionStep;
-        }
-
-        // Recompute follow-up icon after any update
-        setFollowUpIndicator();
+        applyFieldsFromData(data);
+        writeCache(itemId, boardId, data);
 
       } catch (e){
         console.warn("Could not load remote fields:", e);
+      } finally {
+        // tiny delay prevents flicker if load is ultra fast
+        setTimeout(() => showLoading(false), 250);
       }
     }
 
