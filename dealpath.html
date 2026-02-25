@@ -96,7 +96,7 @@
     /* ===== Header / Highlights (FIXED) ===== */
     .highlights{
       width: 100%;
-      padding: 6px 0 0 0;
+      padding: 4px 0 0 0;
       box-sizing:border-box;
       /* slightly tighter bottom spacing, so the bar sits a touch closer */
       margin-bottom: 6px;
@@ -170,7 +170,7 @@
       margin-top: 4px;
       font-size: var(--hl-value-size);
       font-weight: var(--hl-value-weight);
-      letter-spacing: .1px;
+      letter-spacing: 0;
       color: var(--hl-value);
       white-space: nowrap;
       overflow:hidden;
@@ -469,7 +469,7 @@
     .guidanceBody h4{
       margin: 0 0 6px 0;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 600;
       color: #111827;
     }
     .guidanceBody ul{
@@ -634,6 +634,8 @@
         </div>
       </div>
 
+      <div id="contentWrap">
+
       <!-- Highlights -->
       <div class="highlights" aria-label="Highlights panel">
         <!-- ✅ Single-line header (Salesforce-like) -->
@@ -671,7 +673,7 @@
                 </span>
                 <span id="mStalledReason"></span>
               </span>
-              <span id="stallEmpty">--</span>
+              <span id="stallEmpty">—</span>
 </div>
           </div>
 
@@ -679,8 +681,8 @@
             <div class="mLabel">Follow-up Date</div>
             <div class="mValue">
               <span id="mFollowUpDate"></span>
-              <span class="dueIcon" id="followUpIcon" aria-hidden="true"></span>
               <span id="followUpBadge" style="display:none"></span>
+              <span class="dueIcon" id="followUpIcon" aria-hidden="true"></span>
             </div>
           </div>
 
@@ -718,6 +720,8 @@
             <div class="guidanceBody" id="panelBody"></div>
           </div>
         </div>
+      </div>
+
       </div>
 
     </div>
@@ -983,7 +987,7 @@ let activeIndex = 0;
 
     function normalizeText(v){
       const s = pickText(v).trim();
-      return s ? s : "--";
+      return s ? s : "—";
     }
     function setText(id, v){
       const el = document.getElementById(id);
@@ -991,20 +995,82 @@ let activeIndex = 0;
     }
 
 
+    function ordinalSuffix(n){
+      const v = n % 100;
+      if(v >= 11 && v <= 13) return "th";
+      switch(n % 10){
+        case 1: return "st";
+        case 2: return "nd";
+        case 3: return "rd";
+        default: return "th";
+      }
+    }
+    function formatDateNice(d){
+      const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const m = months[d.getMonth()];
+      const day = d.getDate();
+      return `${m} ${day}${ordinalSuffix(day)}`;
+    }
+    function parseIsoDateOnly(text){
+      const raw = pickText(text).trim();
+      if(!raw) return null;
+      // Accept YYYY-MM-DD or YYYY-MM-DD HH:MM...
+      const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if(!m) return null;
+      const iso = `${m[1]}-${m[2]}-${m[3]}`;
+      const d = new Date(iso);
+      if(isNaN(d.getTime())) return null;
+      return { iso, date: d };
+    }
+    function setFollowUpDate(raw){
+      const el = document.getElementById("mFollowUpDate");
+      if(!el) return;
+
+      const picked = pickText(raw).trim();
+      if(!picked){
+        el.textContent = "—";
+        delete el.dataset.iso;
+        return;
+      }
+
+      const isoParsed = parseIsoDateOnly(picked);
+      if(isoParsed){
+        el.dataset.iso = isoParsed.iso;
+        el.textContent = formatDateNice(isoParsed.date);
+        return;
+      }
+
+      // Fallback: try loose parse; keep original text if it looks human-formatted.
+      const loose = parseLooseDate(picked);
+      if(loose){
+        // Store best-effort ISO if year/month/day are present
+        const yyyy = loose.getFullYear();
+        const mm = String(loose.getMonth()+1).padStart(2,"0");
+        const dd = String(loose.getDate()).padStart(2,"0");
+        el.dataset.iso = `${yyyy}-${mm}-${dd}`;
+        el.textContent = formatDateNice(loose);
+        return;
+      }
+
+      el.textContent = normalizeText(picked);
+      delete el.dataset.iso;
+    }
+
     let overlayShownAt = null;
     function showOverlay(on, titleText){
       const overlay = document.getElementById("loadingOverlay");
       const root = document.getElementById("root");
+      const content = document.getElementById("contentWrap");
       const ttl = document.getElementById("loadingOverlayTitle");
       if(!overlay || !root) return;
       if(on){
         if(ttl && typeof titleText === "string") ttl.textContent = titleText;
         overlay.style.display = "flex";
-        root.classList.add("loading-blur");
+        (content || root).classList.add("loading-blur");
         overlayShownAt = Date.now();
       }else{
         overlay.style.display = "none";
-        root.classList.remove("loading-blur");
+        (content || root).classList.remove("loading-blur");
         overlayShownAt = null;
       }
     }
@@ -1014,7 +1080,7 @@ let activeIndex = 0;
       const empty = document.getElementById("stallEmpty");
       const valEl = document.getElementById("mStalledReason");
       const raw = valEl ? pickText(valEl.textContent) : "";
-      const has = String(raw || "").trim() && String(raw).trim() !== "--";
+      const has = String(raw || "").trim() && String(raw).trim() !== "—";
       if(wrap) wrap.style.display = has ? "inline-flex" : "none";
       if(empty) empty.style.display = has ? "none" : "inline";
     }
@@ -1052,7 +1118,7 @@ function showLoading(on, text){
       setText("mHeirsContacted", data?.stageAge);
       setText("mStalledReason", data?.stalledReason);
       setStalledReasonUI();
-      setText("mFollowUpDate", data?.followUpDate);
+      setFollowUpDate(data?.followUpDate);
       setText("mNextActionStep", data?.nextActionStep);
 
       // Recompute follow-up icon after any update
@@ -1183,6 +1249,7 @@ function showLoading(on, text){
 
       const badge = followUpBadge;
       const rawText = String(followUpEl.textContent || "").trim();
+      const isoAttr = (followUpEl.dataset && followUpEl.dataset.iso) ? String(followUpEl.dataset.iso).trim() : "";
       if(followUpIcon) followUpIcon.innerHTML = ""; // keep element but unused visually
       if(badge){
         badge.style.display = "none";
@@ -1191,10 +1258,11 @@ function showLoading(on, text){
       }
 
       // If empty/placeholder, no badge
-      if(!rawText || rawText === "--") return;
+      if(!rawText || rawText === "—") return;
 
-      const d = parseLooseDate(rawText);
+      const d = isoAttr ? new Date(isoAttr) : parseLooseDate(rawText);
       if(!d) return;
+      if(isNaN(d.getTime())) return;
 
       const today = new Date();
       today.setHours(0,0,0,0);
