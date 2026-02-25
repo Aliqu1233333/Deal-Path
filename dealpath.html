@@ -12,8 +12,8 @@
       --active-bg: #17345b;
       --active-fg: #ffffff;
 
-      --done-bg: var(--active-bg);
-      --done-fg: var(--active-fg);
+      --done-bg: #b2f0e4;
+      --done-fg: #0d3a33;
 
       --todo-bg: #e6e6e6;
       --todo-fg: #4f4f4f;
@@ -49,6 +49,7 @@
 
       /* Indicators */
       --ok: #16a34a;
+      --warn: #ca8a04;
       --alert: #dc2626;
       --stall-hl-bg: rgba(220,38,38,0.10);
       --stall-hl-ring: rgba(220,38,38,0.18);
@@ -652,7 +653,7 @@
         <!-- ✅ Single-line header (Salesforce-like) -->
         <div class="hlTop">
           <div class="hlIconTile" aria-hidden="true" title="Lead">
-            <img src="Untitled design (8).png" alt="" aria-hidden="true" />
+            <img src="lead icon recordpage.png" alt="" aria-hidden="true" />
           </div>
 
           <div class="hlTitle" id="hlTitle">1251 Forester St Houston TX 77011</div>
@@ -1044,15 +1045,49 @@ let activeIndex = 0;
   return diffDays === 1 ? "1 Day" : `${diffDays} Days`;
 }
 
+function setStageAgeColor(text){
+  const el = document.getElementById("mHeirsContacted");
+  if(!el) return;
+
+  const raw = String(text || "").trim();
+  // Default color if unknown/empty
+  if(!raw || raw === "—"){
+    el.style.color = "var(--hl-value)";
+    return;
+  }
+
+  const m = raw.match(/(\d+)/);
+  if(!m){
+    el.style.color = "var(--hl-value)";
+    return;
+  }
+  const days = parseInt(m[1], 10);
+  if(!Number.isFinite(days)){
+    el.style.color = "var(--hl-value)";
+    return;
+  }
+
+  if(days < 12){
+    el.style.color = "var(--ok)";
+  }else if(days <= 18){
+    el.style.color = "var(--warn)";
+  }else{
+    el.style.color = "var(--alert)";
+  }
+}
+
 function setStageAgeFromData(data){
   const explicit = pickText(data?.stageAge).trim();
   if(explicit){
     setText("mHeirsContacted", explicit);
+    setStageAgeColor(explicit);
     return;
   }
   const computed = computeStageAgeText(data?.lastStatusChangeDate || data?.last_status_change_date || "");
   setText("mHeirsContacted", computed);
+  setStageAgeColor(computed);
 }
+
 
 function setFollowUpDate(raw){
       const el = document.getElementById("mFollowUpDate");
