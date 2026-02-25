@@ -112,8 +112,8 @@
 
     /* Salesforce-like icon tile */
     .hlIconTile{
-      width: 34px;
-      height: 34px;
+      width: 43px;
+      height: 43px;
       border-radius: 8px;
       background: transparent;
       display:grid;
@@ -123,8 +123,8 @@
     }
 
     .hlIconTile img{
-      width: 34px;
-      height: 34px;
+      width: 43px;
+      height: 43px;
       display:block;
       object-fit: contain;
     }
@@ -546,12 +546,93 @@
     }
     @keyframes spin{to{transform:rotate(360deg)}}
 
+    /* ===== Full-screen loading overlay + blur (perceived speed) ===== */
+    body{ position: relative; }
+    .loading-blur{
+      filter: blur(3px);
+      opacity: 0.92;
+      pointer-events: none;
+      transition: filter 180ms ease, opacity 180ms ease;
+    }
+    .loadingOverlay{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.88);
+      z-index: 100000;
+    }
+    .loadingCard{
+      display:flex;
+      flex-direction: column;
+      align-items:center;
+      gap: 10px;
+      padding: 18px 18px 16px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.96);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.10);
+      min-width: 220px;
+      max-width: 320px;
+    }
+    .loadingSpinner{
+      width: 58px;
+      height: 58px;
+      border: 6px solid rgba(1,118,211,0.18);
+      border-top-color: rgba(1,118,211,1);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    .loadingTitle{
+      font-weight: 800;
+      font-size: 16px;
+      color: #0f172a;
+    }
+    .loadingSub{
+      font-weight: 650;
+      font-size: 12.5px;
+      color: #64748b;
+    }
+
+    /* Badges */
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .1px;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .badge.overdue{
+      background: rgba(220,38,38,0.12);
+      color: var(--alert);
+      box-shadow: inset 0 0 0 1px rgba(220,38,38,0.18);
+    }
+    .badge.upcoming{
+      background: rgba(22,163,74,0.12);
+      color: var(--ok);
+      box-shadow: inset 0 0 0 1px rgba(22,163,74,0.18);
+    }
+
+
   </style>
 </head>
 
 <body>
   <div class="frame">
     <div class="root" id="root">
+
+      <div class="loadingOverlay" id="loadingOverlay" aria-live="polite">
+        <div class="loadingCard">
+          <div class="loadingSpinner" aria-hidden="true"></div>
+          <div class="loadingTitle" id="loadingOverlayTitle">Loading record...</div>
+          <div class="loadingSub" id="loadingOverlaySub">Fetching data from Monday.com</div>
+        </div>
+      </div>
 
       <!-- Highlights -->
       <div class="highlights" aria-label="Highlights panel">
@@ -580,7 +661,7 @@
           <div class="metric">
             <div class="mLabel">Stalled Reason</div>
             <div class="mValue">
-              <span class="stallHL">
+              <span class="stallHL" id="stallWrap" style="display:none">
                 <span class="alertIcon" aria-hidden="true">
                   <svg viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10" fill="var(--alert)"></circle>
@@ -590,7 +671,8 @@
                 </span>
                 <span id="mStalledReason"></span>
               </span>
-            </div>
+              <span id="stallEmpty">--</span>
+</div>
           </div>
 
           <div class="metric">
@@ -598,6 +680,7 @@
             <div class="mValue">
               <span id="mFollowUpDate"></span>
               <span class="dueIcon" id="followUpIcon" aria-hidden="true"></span>
+              <span id="followUpBadge" style="display:none"></span>
             </div>
           </div>
 
@@ -869,15 +952,15 @@ let activeIndex = 0;
         const payload = {
           cachedAt: new Date().toISOString(),
           data: {
-            address: (typeof data?.address === "string") ? data.address : ((typeof data?.title === "string") ? data.title : ""),
-            title: (typeof data?.title === "string") ? data.title : "",
+            address: pickText(data?.address) || pickText(data?.title) || "",
+            title: pickText(data?.title) || "",
             stageKey: data?.stageKey,
             stageLabel: data?.stageLabel,
             leadStatusLabel: data?.leadStatusLabel,
-            stageAge: (typeof data?.stageAge === "string") ? data.stageAge : "",
-            stalledReason: (typeof data?.stalledReason === "string") ? data.stalledReason : "",
-            followUpDate: (typeof data?.followUpDate === "string") ? data.followUpDate : "",
-            nextActionStep: (typeof data?.nextActionStep === "string") ? data.nextActionStep : ""
+            stageAge: pickText(data?.stageAge) || "",
+            stalledReason: pickText(data?.stalledReason) || "",
+            followUpDate: pickText(data?.followUpDate) || "",
+            nextActionStep: pickText(data?.nextActionStep) || ""
           }
         };
         localStorage.setItem(cacheKey(itemId, boardId), JSON.stringify(payload));
@@ -885,14 +968,55 @@ let activeIndex = 0;
     }
 
     
+    function pickText(v){
+      if(v === null || v === undefined) return "";
+      if(typeof v === "string") return v;
+      if(typeof v === "number" || typeof v === "boolean") return String(v);
+      if(typeof v === "object"){
+        // Common Make.com / Monday shapes
+        if(typeof v.text === "string") return v.text;
+        if(typeof v.value === "string") return v.value;
+        if(typeof v.label === "string") return v.label;
+      }
+      return "";
+    }
+
     function normalizeText(v){
-      if(v === null || v === undefined) return "--";
-      const s = String(v).trim();
+      const s = pickText(v).trim();
       return s ? s : "--";
     }
     function setText(id, v){
       const el = document.getElementById(id);
       if(el) el.textContent = normalizeText(v);
+    }
+
+
+    let overlayShownAt = null;
+    function showOverlay(on, titleText){
+      const overlay = document.getElementById("loadingOverlay");
+      const root = document.getElementById("root");
+      const ttl = document.getElementById("loadingOverlayTitle");
+      if(!overlay || !root) return;
+      if(on){
+        if(ttl && typeof titleText === "string") ttl.textContent = titleText;
+        overlay.style.display = "flex";
+        root.classList.add("loading-blur");
+        overlayShownAt = Date.now();
+      }else{
+        overlay.style.display = "none";
+        root.classList.remove("loading-blur");
+        overlayShownAt = null;
+      }
+    }
+
+    function setStalledReasonUI(){
+      const wrap = document.getElementById("stallWrap");
+      const empty = document.getElementById("stallEmpty");
+      const valEl = document.getElementById("mStalledReason");
+      const raw = valEl ? pickText(valEl.textContent) : "";
+      const has = String(raw || "").trim() && String(raw).trim() !== "--";
+      if(wrap) wrap.style.display = has ? "inline-flex" : "none";
+      if(empty) empty.style.display = has ? "none" : "inline";
     }
 
 function showLoading(on, text){
@@ -919,7 +1043,7 @@ function showLoading(on, text){
 
       // Title / Address (optional)
       {
-        const addr = (typeof data?.address === "string") ? data.address : ((typeof data?.title === "string") ? data.title : "");
+        const addr = pickText(data?.address) || pickText(data?.title) || "";
         const t = document.getElementById("hlTitle");
         if(t) t.textContent = normalizeText(addr);
       }
@@ -927,6 +1051,7 @@ function showLoading(on, text){
       // Metrics (optional)
       setText("mHeirsContacted", data?.stageAge);
       setText("mStalledReason", data?.stalledReason);
+      setStalledReasonUI();
       setText("mFollowUpDate", data?.followUpDate);
       setText("mNextActionStep", data?.nextActionStep);
 
@@ -948,6 +1073,9 @@ function showLoading(on, text){
       }
 
       showLoading(true, cached ? "Syncing…" : "Loading…");
+      showOverlay(true, "Loading record...");
+      const overlayMinMs = 1500;
+      const overlayStart = Date.now();
 
       try{
         const url = new URL(MAKE_GET_STAGE_URL);
@@ -972,7 +1100,11 @@ function showLoading(on, text){
         console.warn("Could not load remote fields:", e);
       } finally {
         // tiny delay prevents flicker if load is ultra fast
+        // Prevent flicker + ensure at least ~1.5s overlay or until data arrives
         setTimeout(() => showLoading(false), 250);
+        const elapsed = Date.now() - overlayStart;
+        const remaining = Math.max(0, overlayMinMs - elapsed);
+        setTimeout(() => showOverlay(false), remaining);
       }
     }
 
@@ -1032,6 +1164,7 @@ function showLoading(on, text){
     /* Follow-up indicator icons */
     const followUpEl = document.getElementById("mFollowUpDate");
     const followUpIcon = document.getElementById("followUpIcon");
+    const followUpBadge = document.getElementById("followUpBadge");
 
     function parseLooseDate(text){
       if(!text) return null;
@@ -1044,11 +1177,23 @@ function showLoading(on, text){
       return d;
     }
 
+    
     function setFollowUpIndicator(){
-      if(!followUpEl || !followUpIcon) return;
+      if(!followUpEl) return;
 
-      const d = parseLooseDate(followUpEl.textContent);
-      followUpIcon.innerHTML = "";
+      const badge = followUpBadge;
+      const rawText = String(followUpEl.textContent || "").trim();
+      if(followUpIcon) followUpIcon.innerHTML = ""; // keep element but unused visually
+      if(badge){
+        badge.style.display = "none";
+        badge.className = "";
+        badge.textContent = "";
+      }
+
+      // If empty/placeholder, no badge
+      if(!rawText || rawText === "--") return;
+
+      const d = parseLooseDate(rawText);
       if(!d) return;
 
       const today = new Date();
@@ -1056,25 +1201,16 @@ function showLoading(on, text){
       const dd = new Date(d);
       dd.setHours(0,0,0,0);
 
-      if(dd > today){
-        followUpIcon.innerHTML = `
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" fill="var(--ok)"></circle>
-            <path d="M9 12.7 7.2 10.9 5.8 12.3 9 15.5 18.2 6.3 16.8 4.9z" fill="#fff"></path>
-          </svg>
-        `;
-      } else if(dd < today){
-        followUpIcon.innerHTML = `
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" fill="var(--alert)"></circle>
-            <path d="M11 6h2v9h-2z" fill="#fff"></path>
-            <path d="M11 17h2v2h-2z" fill="#fff"></path>
-          </svg>
-        `;
+      const isOverdue = dd < today;
+      if(badge){
+        badge.style.display = "inline-flex";
+        badge.className = "badge " + (isOverdue ? "overdue" : "upcoming");
+        badge.textContent = isOverdue ? "overdue" : "upcoming";
       }
     }
 
     setFollowUpIndicator();
+
     if(followUpEl){
       const obs = new MutationObserver(() => setFollowUpIndicator());
       obs.observe(followUpEl, { childList: true, characterData: true, subtree: true });
@@ -1086,6 +1222,7 @@ function showLoading(on, text){
       const el = document.getElementById(id);
       if(el) setText(id, el.textContent);
     });
+    setStalledReasonUI();
     loadStageFromMonday();
   </script>
 </body>
