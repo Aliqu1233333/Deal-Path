@@ -224,11 +224,8 @@
       width: 100%;
       display:flex;
       align-items:center;
-      gap: 6px;
+      gap: 10px;
       min-width: 0;
-
-      /* Replaces the removed divider's spacing, but slightly tighter.
-         This will NOT push the bar lower than before (it will be the same or a bit higher). */
       margin-top: 6px;
     }
 
@@ -385,35 +382,37 @@
       transform: translateX(-50%) translateY(0px);
     }
 
+    /* ─── CTA button ─── */
     .cta{
       height: 30px;
-      padding: 0 8px;
-      border-radius: 15px;
+      padding: 0 14px;
+      border-radius: 10px;
       border: 0;
-      cursor:pointer;
+      cursor: pointer;
       font-size: 12px;
       font-weight: 700;
       letter-spacing: .1px;
       color: #fff;
-      background: #1d63ff;
-      display:flex;
-      align-items:center;
+      background: #1447c0;
+      display: flex;
+      align-items: center;
       gap: 6px;
-      box-shadow: 0 6px 16px rgba(29,99,255,0.20);
-      white-space:nowrap;
+      box-shadow: none;
+      white-space: nowrap;
       flex: 0 0 auto;
-      transition: transform 160ms ease, filter 160ms ease, box-shadow 160ms ease;
+      transition: background 160ms ease, transform 140ms ease, box-shadow 140ms ease;
       position: relative;
-      overflow:hidden;
+      overflow: hidden;
     }
     .cta:hover{
-      filter: brightness(1.03);
-      box-shadow: 0 8px 26px rgba(29,99,255,0.24);
+      background: #123fae;
       transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.18);
     }
     .cta:active{
-      transform: translateY(1px);
-      box-shadow: 0 6px 16px rgba(29,99,255,0.14);
+      background: #0f389d;
+      transform: translateY(0px);
+      box-shadow: none;
     }
 
     @media (max-width: 760px){
@@ -648,10 +647,62 @@ to{ transform: scale(1); opacity: 1;} }
 
 /* --- Completed checkmark style (match reference) --- */
 .stage[data-state="active"] .chk,
-.stage[data-state="todo"] </style>
+.stage[data-state="todo"] 
+    /* ===== CLOSED CELEBRATION ===== */
+    @keyframes closedFlash{
+      0%   { background: var(--active-bg); }
+      18%  { background: #16a34a; }
+      55%  { background: #15803d; }
+      100% { background: var(--done-bg); }
+    }
+    .stage-closed-flash{
+      animation: closedFlash 1.0s cubic-bezier(0.22,1,0.36,1) forwards !important;
+    }
+
+    /* Win toast — understated, matches existing toast style */
+    #winToast{
+      position: fixed;
+      top: -60px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99999;
+      background: #f0fdf4;
+      color: #14532d;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      padding: 9px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 220px;
+      max-width: 320px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+      transition: top 360ms cubic-bezier(0.22,1,0.36,1), opacity 240ms ease;
+      opacity: 0;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    #winToast.show{
+      top: 14px;
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #winToast.hide{
+      top: -60px;
+      opacity: 0;
+    }
+    .win-title{
+      font-size: 13px;
+      font-weight: 650;
+      color: #14532d;
+      line-height: 1.2;
+    }
+
+  </style>
 </head>
 
 <body>
+  <div id="winToast" role="status" aria-live="assertive"></div>
   <div class="frame">
     <div class="root" id="root">
 
@@ -801,7 +852,7 @@ to{ transform: scale(1); opacity: 1;} }
       interested_selling: { title: "Confirm selling intent", bullets: [
         "What price range are they expecting and why?",
         "Are there liens, taxes due, or title issues we should anticipate?",
-        "What would make this a ‘yes’ for them today?"
+        "What would make this a 'yes' for them today?"
       ]},
       negotiation_review: { title: "Numbers + next steps", bullets: [
         "Confirm payoff amounts, taxes owed, and any required parties to sign.",
@@ -839,6 +890,7 @@ to{ transform: scale(1); opacity: 1;} }
 
 let activeIndex = 0;
     let isSavingRemoteStage = false;
+    let closedComplete = false;
 
     const el = document.getElementById("dealPath");
     const completeBtn = document.getElementById("completeBtn");
@@ -900,7 +952,8 @@ let activeIndex = 0;
         btn.setAttribute("aria-selected", String(i === activeIndex));
         btn.dataset.stage = s.key;
 
-        const state = (i < activeIndex) ? "done" : (i === activeIndex ? "active" : "todo");
+        const isLastStage = i === STAGES.length - 1;
+        const state = (i < activeIndex) ? "done" : (i === activeIndex ? (closedComplete && isLastStage ? "done" : "active") : "todo");
         btn.dataset.state = state;
 
         const labelWrap = document.createElement("span");
@@ -934,9 +987,13 @@ let activeIndex = 0;
       const prev = activeIndex;
       if(i === prev) return;
       activeIndex = i;
+      if(i !== STAGES.length - 1) closedComplete = false;
       render();
 
-      if(opts.announce){
+      const isClosing = i === STAGES.length - 1;
+      if(isClosing && opts.announce){
+        setTimeout(() => fireClosedCelebration(), 140);
+      } else if(opts.announce){
         const label = STAGES[activeIndex].label || "Started";
         setTimeout(() => showToast(`Status changed successfully. (${label})`), 120);
       }
@@ -1178,6 +1235,7 @@ function showLoading(on, text){
       const idx = stageIndexFromResponse(data);
       if(idx >= 0){
         activeIndex = idx;
+        if(idx === STAGES.length - 1) closedComplete = true;
         render();
       }
 
@@ -1296,8 +1354,14 @@ function showLoading(on, text){
     completeBtn.addEventListener("click", () => {
       if(activeIndex < STAGES.length - 1){
         setTimeout(() => setActive(activeIndex + 1, { announce: true, saveRemote: true }), 80);
+      } else if(!closedComplete){
+        // Already on Closed — mark it visually done
+        closedComplete = true;
+        render();
+        setTimeout(() => fireClosedCelebration(), 140);
+        saveStageToMonday(activeIndex).catch(()=>{});
       } else {
-        showToast("Already at final status.");
+        showToast("Deal is already closed.");
       }
     });
 
@@ -1356,6 +1420,34 @@ function showLoading(on, text){
     if(followUpEl){
       const obs = new MutationObserver(() => setFollowUpIndicator());
       obs.observe(followUpEl, { childList: true, characterData: true, subtree: true });
+    }
+
+
+    /* ===== CLOSED CELEBRATION ===== */
+    function fireClosedCelebration(){
+      // Flash the closed stage green
+      const stages = document.querySelectorAll(".stage");
+      const last = stages[stages.length - 1];
+      if(last){ last.classList.remove("stage-closed-flash"); void last.offsetWidth; last.classList.add("stage-closed-flash"); }
+
+      // Show understated win toast
+      showWinToast();
+    }
+
+    let winToastTimer = null;
+    function showWinToast(){
+      const t = document.getElementById("winToast");
+      if(!t) return;
+      t.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M9 12.5L11.5 15L15.5 10" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="12" r="9" stroke="#16a34a" stroke-width="1.5" opacity="0.5"/>
+        </svg>
+        <div class="win-title">Deal marked as closed.</div>`;
+      t.classList.remove("hide");
+      t.classList.add("show");
+      clearTimeout(winToastTimer);
+      winToastTimer = setTimeout(() => { t.classList.remove("show"); t.classList.add("hide"); }, 3200);
     }
 
     render();
