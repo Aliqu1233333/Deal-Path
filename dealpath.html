@@ -1260,7 +1260,7 @@ function showLoading(on, text){
 
     async function loadStageFromMonday(){
       const itemId = getParam("itemId");
-      const boardId = getParam("boardId");
+      const boardId = getParam("boardId") || getParam("board_id");
       if(!itemId) return;
       if(!isWebhookConfigured(MAKE_GET_STAGE_URL)) return;
 
@@ -1324,7 +1324,7 @@ function showLoading(on, text){
         previousStageKey: STAGES[prevIndex]?.key || null,
         previousStageLabel: STAGES[prevIndex]?.label || null,
         occurredAt: new Date().toISOString(),
-        boardId: getParam("boardId"),
+        boardId: getParam("boardId") || getParam("board_id"),
         userId: getParam("userId")
       };
 
