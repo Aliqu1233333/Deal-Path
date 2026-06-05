@@ -337,6 +337,38 @@
       color: var(--done-fg) !important;
     }
 
+    /* ===== Off-ramp state (Nurture / Lost / Dead) ===== */
+    /* The whole path desaturates to signal "not in active pursuit", while the
+       chevron still shows how far the file advanced. A badge names the exit. */
+    .deal-path.path-offramp .stage{
+      filter: grayscale(0.7) opacity(0.6);
+      transition: filter 200ms ease;
+    }
+    .offramp-badge{
+      position:absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 6;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .3px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      filter: none !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      pointer-events: none;
+    }
+    /* lift the badged stage back to full strength so the badge reads clearly */
+    .deal-path.path-offramp .stage:has(.offramp-badge){
+      filter: grayscale(0.25) opacity(0.92);
+    }
+    .offramp-warn{  background: #fef3c7; color: #92400e; box-shadow: inset 0 0 0 1px #fcd34d, 0 2px 8px rgba(0,0,0,.15); }
+    .offramp-alert{ background: #fee2e2; color: #991b1b; box-shadow: inset 0 0 0 1px #fca5a5, 0 2px 8px rgba(0,0,0,.15); }
+    .offramp-muted{ background: #e5e7eb; color: #374151; box-shadow: inset 0 0 0 1px #cbd5e1, 0 2px 8px rgba(0,0,0,.15); }
+
     .label{
       display:flex;
       align-items:center;
@@ -386,7 +418,7 @@
     .cta{
       height: 30px;
       padding: 0 14px;
-      border-radius: 13px;
+      border-radius: 16px;
       border: 0;
       cursor: pointer;
       font-size: 12px;
@@ -412,6 +444,16 @@
     .cta:active{
       background: #0f389d;
       transform: translateY(0px);
+      box-shadow: none;
+    }
+    .cta.cta-done{
+      background: #16a34a;
+      cursor: default;
+      opacity: 0.95;
+    }
+    .cta.cta-done:hover{
+      background: #16a34a;
+      transform: none;
       box-shadow: none;
     }
 
@@ -641,7 +683,7 @@
 }
 
 /* Press feedback during the click delay */
-.stage-pressed{ animation: stagePress .35s ease !important; }
+.stage-pressed{ animation: stagePress .5s ease !important; }
 @keyframes stagePress{
   0%   { transform: scale(1); filter: brightness(1); }
   50%  { transform: scale(0.96); filter: brightness(0.94); }
@@ -687,39 +729,119 @@ to{ transform: scale(1); opacity: 1;} }
       animation: closedFlash 1.0s cubic-bezier(0.22,1,0.36,1) forwards !important;
     }
 
-    /* Completion fill — a solid green wipe pours across each stage in turn,
-       left → right, like the whole path completing in one motion */
+    /* Completion pour — each stage pops up boldly in turn, left → right,
+       building emphasis as the wave crosses the whole path */
+    .stage-fill{
+      animation: fillPop .46s cubic-bezier(0.34,1.7,0.5,1) both !important;
+      animation-delay: var(--fill-delay, 0ms);
+      z-index: 2;
+    }
+    @keyframes fillPop{
+      0%   { transform: translateY(0)    scale(1);    }
+      35%  { transform: translateY(-9px) scale(1.12); }
+      62%  { transform: translateY(2px)  scale(0.97); }
+      82%  { transform: translateY(-1px) scale(1.02); }
+      100% { transform: translateY(0)    scale(1);    }
+    }
+    /* bright sheen sweep + outward ring pulse as each stage pops */
     .stage-fill::after{ display:none; }
     .stage-fill::before{
       content:"";
       position:absolute;
       inset:0;
       clip-path: inherit;
-      background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%);
-      transform: scaleX(0);
-      transform-origin: left center;
+      background: linear-gradient(100deg,
+        rgba(255,255,255,0) 30%,
+        rgba(255,255,255,0.95) 50%,
+        rgba(255,255,255,0) 70%);
+      background-size: 220% 100%;
+      background-position: 160% 0;
+      opacity: 0;
       pointer-events:none;
       z-index: 1;
-      animation: fillPour .32s cubic-bezier(0.4,0,0.2,1) forwards;
+      animation: fillSheen .46s ease-out both;
       animation-delay: var(--fill-delay, 0ms);
     }
-    @keyframes fillPour{
-      from{ transform: scaleX(0); }
-      to  { transform: scaleX(1); }
+    @keyframes fillSheen{
+      0%   { opacity: 0;   background-position: 160% 0; }
+      25%  { opacity: 1;   }
+      100% { opacity: 0;   background-position: -60% 0; }
     }
-    /* keep the stage label above the fill */
-    .stage-fill .label{ position:relative; z-index: 2; }
+    .stage-fill .label{ position:relative; z-index: 3; }
 
-    /* final stage gives a little bounce as the fill lands */
+    /* final stage: strong bounce + glowing ring burst as the wave lands */
     @keyframes fillBounce{
       0%   { transform: scale(1);    }
-      45%  { transform: scale(1.06); }
-      75%  { transform: scale(0.98); }
+      30%  { transform: scale(1.18); }
+      55%  { transform: scale(0.95); }
+      78%  { transform: scale(1.05); }
       100% { transform: scale(1);    }
     }
     .stage-fill-last{
-      animation: fillBounce .4s cubic-bezier(0.34,1.56,0.64,1) !important;
-      z-index: 3;
+      animation: fillBounce .55s cubic-bezier(0.34,1.7,0.5,1) !important;
+      z-index: 4;
+    }
+    .stage-fill-last::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      clip-path: inherit;
+      box-shadow: 0 0 0 0 rgba(22,163,74,0.6);
+      pointer-events:none;
+      z-index: 1;
+      animation: lastRing .6s ease-out forwards;
+    }
+    @keyframes lastRing{
+      0%   { box-shadow: 0 0 0 0 rgba(22,163,74,0.6); }
+      100% { box-shadow: 0 0 0 16px rgba(22,163,74,0); }
+    }
+
+    /* confetti burst at the final stage */
+    .confetti-burst{
+      position:absolute;
+      width:0; height:0;
+      pointer-events:none;
+      z-index: 50;
+    }
+    .confetti-burst i{
+      position:absolute;
+      top:0; left:0;
+      width:7px; height:7px;
+      border-radius:1px;
+      opacity:0;
+      transform: translate(-50%,-50%);
+      animation: confettiFly 1.2s cubic-bezier(0.2,0.6,0.3,1) forwards;
+    }
+    /* launch up + out, then fall with gravity, fading as it drops */
+    @keyframes confettiFly{
+      0%   { opacity:0;
+             transform: translate(-50%,-50%) rotate(0deg) scale(0.5); }
+      10%  { opacity:1; }
+      40%  { opacity:1;
+             transform: translate(calc(-50% + var(--dx)*0.6), calc(-50% + var(--cy1)))
+                        rotate(calc(var(--cr)*0.5)) scale(1); }
+      100% { opacity:0;
+             transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--cy2)))
+                        rotate(var(--cr)) scale(0.9); }
+    }
+
+    /* Celebration glow pulse behind the whole bar */
+    #celebrateFlash{
+      position:absolute;
+      inset: -10px -6px;
+      border-radius: 18px;
+      pointer-events:none;
+      z-index: 0;
+      opacity: 0;
+      background: radial-gradient(ellipse at center, rgba(34,197,94,0.35), rgba(34,197,94,0) 70%);
+    }
+    #celebrateFlash.go{
+      animation: celebrateGlow .9s ease-out;
+    }
+    @keyframes celebrateGlow{
+      0%   { opacity:0;   transform: scale(0.96); }
+      30%  { opacity:1;   transform: scale(1.02); }
+      100% { opacity:0;   transform: scale(1.05); }
     }
 
     /* Win toast — understated, matches existing toast style */
@@ -887,44 +1009,94 @@ to{ transform: scale(1); opacity: 1;} }
     const MAKE_GET_STAGE_URL = "https://hook.us1.make.com/mnd1t2736lba22cphjm1qxfdffe1jemy";
     const MONDAY_STATUS_COLUMN_ID = "status__1";
 
+    /* ===== FORWARD DEAL PATH (file-level, strictly progressive) =====
+       Each stage represents how far the PROPERTY has advanced toward closing.
+       Contact outcomes (Dial NA, Attempt 1/2/3, voicemails) are NOT stages —
+       they live on subitems. A file stays in Discovery until a real
+       decision-maker is reached, regardless of how many dials happen. */
     const STAGES = [
-      { key: "discovery",           label: "Discovery" },
-      { key: "dial_na",             label: "Dial NA" },
-      { key: "contacted_nurture",   label: "Contacted" },
-      { key: "interested_selling",  label: "Interested in Selling" },
-      { key: "negotiation_review",  label: "Negotiation-Review" },
-      { key: "closed",              label: "Closed" }
+      { key: "new",            label: "New" },
+      { key: "discovery",      label: "Discovery" },
+      { key: "contact_made",   label: "Contact Made" },
+      { key: "qualifying",     label: "Qualifying" },
+      { key: "negotiation",    label: "Negotiation/Review" },
+      { key: "under_contract", label: "Under Contract" },
+      { key: "closed",         label: "Closed" }
     ];
 
+    /* ===== OFF-RAMPS (terminal / parallel — NOT chevron stages) =====
+       When a file exits active pursuit it lands on one of these. The chevron
+       keeps showing how far it got, with an off-ramp badge layered on top. */
+    const OFFRAMPS = [
+      { key: "nurture", label: "Long-Term Nurture", tone: "warn" },
+      { key: "lost",    label: "Lost",              tone: "alert" },
+      { key: "dead",    label: "Dead",              tone: "muted" }
+    ];
+
+    /* Map existing Monday Lead Status labels → new stage keys / off-ramp keys.
+       Lets the chevron read the current board correctly before/while you
+       rename the status labels. Keys are normalized (lowercase, no punctuation). */
+    const STAGE_ALIASES = {
+      "untouched":                   "new",
+      "initial dd":                  "discovery",
+      "contacted discovery":         "discovery",
+      "dial na":                     "discovery",
+      "contacted":                   "contact_made",
+      "contacted awaiting response": "contact_made",
+      "interested in selling":       "qualifying",
+      "interested unresponsive":     "qualifying",
+      "negotiation review":          "negotiation",
+      "negotiations review":         "negotiation",
+      "accepted offer":              "negotiation",
+      "under contract":              "under_contract",
+      "sold":                        "closed",
+      "auctioned off":               "closed"
+    };
+    const OFFRAMP_ALIASES = {
+      "asking above retail":         "lost",
+      "asking to much":              "lost",
+      "asking too much":             "lost",
+      "selling on market":           "lost",
+      "not interested in selling":   "lost",
+      "not worth pursuing":          "dead"
+    };
+
+    let activeOfframp = null; // holds an OFFRAMPS entry when file is off-path
+
     const STAGE_NOTES = {
-      discovery: { title: "Qualify the lead", bullets: [
-        "What is the property address and ownership structure (single / heirs / fractional)?",
-        "Why are they considering selling right now?",
-        "Is anyone else involved in the decision?"
+      new: { title: "Open the file", bullets: [
+        "Confirm the property address, county, and basic ownership picture.",
+        "Pull initial data (deed, tax status, appraisal) to decide if it's worth pursuing.",
+        "Set the first research task to move into Discovery."
       ]},
-      dial_na: { title: "Dialing outcomes", bullets: [
-        "Was contact made? If not, confirm best callback window.",
-        "Verify phone number(s) and any alternate contacts.",
-        "Leave a concise voicemail and set a follow-up date."
+      discovery: { title: "Find & verify the people (all dialing lives here)", bullets: [
+        "Identify and verify heirs / decision-makers; build the contact list on subitems.",
+        "Skip-trace numbers and work the dials — Dial NA, Attempt 1/2/3 are tracked per-contact, not on the file.",
+        "Stay in Discovery until a real decision-maker actually answers."
       ]},
-      contacted_nurture: { title: "Build rapport + clarify motivation", bullets: [
-        "What problem are they trying to solve (taxes, vacancy, inheritance, repairs)?",
-        "What timeline do they want to move on this?",
-        "What condition issues should we expect?"
+      contact_made: { title: "You reached a decision-maker", bullets: [
+        "Confirm this person can speak to the property and the decision.",
+        "Capture relationship and ownership %, log the contact outcome on the subitem.",
+        "Set the next conversation to begin qualifying."
       ]},
-      interested_selling: { title: "Confirm selling intent", bullets: [
-        "What price range are they expecting and why?",
-        "Are there liens, taxes due, or title issues we should anticipate?",
-        "What would make this a 'yes' for them today?"
+      qualifying: { title: "Gauge motivation & gather the facts", bullets: [
+        "Why sell, and on what timeline? What problem are they solving?",
+        "Confirm ownership structure, liens, taxes owed, and condition.",
+        "Decide whether this is worth taking to an offer."
       ]},
-      negotiation_review: { title: "Numbers + next steps", bullets: [
-        "Confirm payoff amounts, taxes owed, and any required parties to sign.",
-        "Align on inspection/verification expectations and timing.",
-        "Confirm the exact offer terms before moving forward."
+      negotiation: { title: "Offer & terms", bullets: [
+        "Present the offer; confirm payoff amounts and all parties required to sign.",
+        "Work price/terms and align on verification + timing.",
+        "Lock the exact terms before moving to contract."
+      ]},
+      under_contract: { title: "Get to the closing table", bullets: [
+        "Confirm signed agreement and all signers verified.",
+        "Track title/closing timeline, contingencies, and key dates.",
+        "Keep all parties moving toward funding."
       ]},
       closed: { title: "Close-out checklist", bullets: [
         "Confirm signed docs received and parties verified.",
-        "Confirm title/closing timeline and contact points.",
+        "Confirm funding and final closing details.",
         "Capture lessons learned / notes for future deals."
       ]}
     };
@@ -1045,22 +1217,42 @@ let activeIndex = 0;
           btn.classList.remove("stage-pressed");
           void btn.offsetWidth;
           btn.classList.add("stage-pressed");
-          setTimeout(() => setActive(i, { announce: true, saveRemote: true }), 350);
+          setTimeout(() => setActive(i, { announce: true, saveRemote: true }), 500);
         });
         el.appendChild(btn);
       });
+
+      // ===== Off-ramp overlay: file has exited active pursuit =====
+      // Instead of a chevron stage, dim the path and lay a badge over the
+      // last-reached stage so "how far it got" stays visible.
+      el.classList.remove("path-offramp");
+      if(activeOfframp){
+        el.classList.add("path-offramp");
+        const stages = el.querySelectorAll(".stage");
+        const anchor = stages[Math.min(activeIndex, stages.length - 1)];
+        if(anchor){
+          const badge = document.createElement("span");
+          badge.className = "offramp-badge offramp-" + activeOfframp.tone;
+          badge.textContent = activeOfframp.label;
+          anchor.appendChild(badge);
+        }
+      }
 
       renderGuidance();
     }
 
     function setActive(i, opts = {}){
       const prev = activeIndex;
-      if(i === prev) return;
+      if(i === prev && !activeOfframp) return;
       activeIndex = i;
-      if(i !== STAGES.length - 1) closedComplete = false;
-      render();
+      activeOfframp = null; // moving onto a forward stage puts the file back in active pursuit
 
       const isClosing = i === STAGES.length - 1;
+      // Reaching Closed IS completion — terminal and atomic, no second step.
+      closedComplete = isClosing;
+      render();
+      updateCompleteBtn();
+
       if(isClosing && opts.announce){
         setTimeout(() => fireClosedCelebration(), 140);
       } else if(opts.announce){
@@ -1072,29 +1264,61 @@ let activeIndex = 0;
       }
     }
 
+    function normKey(s){
+      return String(s || "").trim().toLowerCase()
+        .replace(/[\/\-\.]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
     function stageIndexFromResponse(data){
+      // Reset off-ramp each read; set below if the label is terminal.
+      activeOfframp = null;
+
+      // 1) Explicit stage key from backend
       if(data?.stageKey){
         const idx = STAGES.findIndex(s => s.key === data.stageKey);
         if(idx >= 0) return idx;
+        const off = OFFRAMPS.find(o => o.key === data.stageKey);
+        if(off){ activeOfframp = off; return offrampFallbackIndex(off); }
       }
       if(data?.leadStatus){
         const idx = STAGES.findIndex(s => s.key === data.leadStatus);
         if(idx >= 0) return idx;
       }
-      if(data?.stageLabel || data?.leadStatusLabel){
-        const stageLabel = data?.stageLabel ?? data?.leadStatusLabel;
 
-        const target = String(stageLabel || "").trim().toLowerCase()
-          .replace(/[\/\-]/g, " ")
-          .replace(/\s+/g, " ");
+      // 2) Match by label (current Monday Lead Status text), via aliases
+      const rawLabel = data?.stageLabel ?? data?.leadStatusLabel;
+      if(rawLabel){
+        const target = normKey(rawLabel);
+
+        // direct match to a new stage label
         for(let i=0;i<STAGES.length;i++){
-          const cand = String(STAGES[i].label || "").trim().toLowerCase()
-            .replace(/[\/\-]/g, " ")
-            .replace(/\s+/g, " ");
-          if(cand === target) return i;
+          if(normKey(STAGES[i].label) === target) return i;
+        }
+        // off-ramp by label
+        for(const o of OFFRAMPS){
+          if(normKey(o.label) === target){ activeOfframp = o; return offrampFallbackIndex(o); }
+        }
+        // alias → stage
+        if(STAGE_ALIASES[target]){
+          const idx = STAGES.findIndex(s => s.key === STAGE_ALIASES[target]);
+          if(idx >= 0) return idx;
+        }
+        // alias → off-ramp
+        if(OFFRAMP_ALIASES[target]){
+          const off = OFFRAMPS.find(o => o.key === OFFRAMP_ALIASES[target]);
+          if(off){ activeOfframp = off; return offrampFallbackIndex(off); }
         }
       }
       return -1;
+    }
+
+    /* When a file is on an off-ramp, the chevron still shows how far it got.
+       Default to last known progress if backend sends one, else Discovery. */
+    function offrampFallbackIndex(off){
+      // 'dead' early-disqualified → show New/Discovery; others → keep wherever they were.
+      return (off && off.key === "dead") ? 1 : Math.max(activeIndex, 1);
     }
     function cacheKey(itemId, boardId){
       return "dealpath_cache::" + (boardId ? String(boardId) : "") + "::" + String(itemId);
@@ -1305,8 +1529,9 @@ function showLoading(on, text){
       const idx = stageIndexFromResponse(data);
       if(idx >= 0){
         activeIndex = idx;
-        if(idx === STAGES.length - 1) closedComplete = true;
+        closedComplete = (idx === STAGES.length - 1);
         render();
+        updateCompleteBtn();
       }
 
       // Title / Address (optional)
@@ -1421,19 +1646,37 @@ function showLoading(on, text){
       panelWrap.classList.toggle("collapsed", !next);
     });
 
+    function updateCompleteBtn(){
+      if(!completeBtn) return;
+      const onClosed = (activeIndex === STAGES.length - 1) && closedComplete;
+      if(onClosed){
+        completeBtn.disabled = true;
+        completeBtn.classList.add("cta-done");
+        completeBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="white" d="M9 16.2 4.8 12 3.4 13.4 9 19l12-12-1.4-1.4z"/>
+          </svg>
+          Deal Closed`;
+      } else {
+        completeBtn.disabled = false;
+        completeBtn.classList.remove("cta-done");
+        completeBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="white" d="M9 16.2 4.8 12 3.4 13.4 9 19l12-12-1.4-1.4z"/>
+          </svg>
+          Mark Stage as Complete`;
+      }
+    }
+
     completeBtn.addEventListener("click", () => {
+      if(completeBtn.disabled) return;
+      // Advancing always moves forward one stage. Landing on Closed completes
+      // the deal in a single step (setActive fires the one celebration).
       if(activeIndex < STAGES.length - 1){
         setTimeout(() => setActive(activeIndex + 1, { announce: true, saveRemote: true }), 80);
-      } else if(!closedComplete){
-        // Already on Closed — mark it visually done
-        closedComplete = true;
-        render();
-        setTimeout(() => fireClosedCelebration(), 140);
-        saveStageToMonday(activeIndex).catch(()=>{});
-      } else {
-        showToast("Deal is already closed.");
       }
     });
+    updateCompleteBtn();
 
     /* Follow-up indicator icons */
     const followUpEl = document.getElementById("mFollowUpDate");
@@ -1494,13 +1737,60 @@ function showLoading(on, text){
 
 
     /* ===== CLOSED CELEBRATION ===== */
+    function spawnConfetti(anchorEl, opts){
+      opts = opts || {};
+      const host = (anchorEl && anchorEl.closest(".bar")) || document.querySelector(".bar");
+      if(!host) return;
+      if(getComputedStyle(host).position === "static") host.style.position = "relative";
+
+      const hostRect = host.getBoundingClientRect();
+      // Launch across the full width of the bar for a fuller burst, biased to a center
+      const originX = opts.originX != null ? opts.originX : hostRect.width * 0.5;
+      const originY = opts.originY != null ? opts.originY : hostRect.height * 0.5;
+      const spreadX = opts.spreadX != null ? opts.spreadX : hostRect.width * 0.5;
+
+      const burst = document.createElement("span");
+      burst.className = "confetti-burst";
+      burst.style.left = "0px";
+      burst.style.top  = "0px";
+
+      const colors = ["#1447c0","#16a34a","#f59e0b","#ec4899","#06b6d4","#ffffff","#22c55e","#a855f7"];
+      const pieces = opts.pieces || 46;
+      for(let k=0;k<pieces;k++){
+        const i = document.createElement("i");
+        // start somewhere along the bar width
+        const startX = originX + (Math.random()*2 - 1) * spreadX;
+        const startY = originY + (Math.random()*2 - 1) * 8;
+        // launch up and outward, then fall (gravity handled in keyframe via --cy2)
+        const dx = (Math.random()*2 - 1) * 120;
+        const upY = -(40 + Math.random()*70);
+        const fallY = 60 + Math.random()*90;
+        i.style.left = startX.toFixed(1) + "px";
+        i.style.top  = startY.toFixed(1) + "px";
+        i.style.setProperty("--dx",  dx.toFixed(1) + "px");
+        i.style.setProperty("--cy1", upY.toFixed(1) + "px");
+        i.style.setProperty("--cy2", fallY.toFixed(1) + "px");
+        i.style.setProperty("--cr",  (Math.random()*900 - 450).toFixed(0) + "deg");
+        i.style.background = colors[k % colors.length];
+        // mix in a few rectangles vs squares for variety
+        if(k % 3 === 0){ i.style.width = "5px"; i.style.height = "10px"; }
+        i.style.animationDelay = (Math.random()*120) + "ms";
+        i.style.animationDuration = (1100 + Math.random()*500) + "ms";
+        burst.appendChild(i);
+      }
+      host.appendChild(burst);
+      setTimeout(() => burst.remove(), 1900);
+    }
+
     function fireClosedCelebration(){
       const stages = document.querySelectorAll(".stage");
       const last = stages[stages.length - 1];
       const n = stages.length;
+      const bar = document.querySelector(".bar");
+      const barRect = bar ? bar.getBoundingClientRect() : null;
 
-      // Green fill pours across each stage in turn, left → right.
-      const step = 110; // ms between each stage starting to fill
+      // Bold pop pours across each stage in turn, left → right.
+      const step = 95;
       stages.forEach((st, idx) => {
         st.classList.remove("stage-fill");
         void st.offsetWidth;
@@ -1508,8 +1798,7 @@ function showLoading(on, text){
         st.classList.add("stage-fill");
       });
 
-      // When the fill reaches the final stage, give it a bounce + green flash
-      const finalDelay = (n - 1) * step + 320;
+      const finalDelay = (n - 1) * step + 300;
       setTimeout(() => {
         if(last){
           last.classList.remove("stage-fill-last");
@@ -1519,9 +1808,34 @@ function showLoading(on, text){
           void last.offsetWidth;
           last.classList.add("stage-closed-flash");
         }
+        // Big celebration: two confetti waves — one wide across the bar,
+        // one concentrated over the final stage — plus a screen flash.
+        spawnConfetti(last, { pieces: 54 });
+        if(barRect && last){
+          const lastRect = last.getBoundingClientRect();
+          const cx = (lastRect.left + lastRect.width/2) - barRect.left;
+          setTimeout(() => spawnConfetti(last, { pieces: 30, originX: cx, spreadX: 40 }), 180);
+        }
+        fireScreenFlash();
       }, finalDelay);
 
       setTimeout(showWinToast, finalDelay);
+    }
+
+    /* Soft full-bar glow pulse behind the celebration */
+    function fireScreenFlash(){
+      const bar = document.querySelector(".bar");
+      if(!bar) return;
+      let fx = document.getElementById("celebrateFlash");
+      if(!fx){
+        fx = document.createElement("div");
+        fx.id = "celebrateFlash";
+        bar.appendChild(fx);
+      }
+      fx.classList.remove("go");
+      void fx.offsetWidth;
+      fx.classList.add("go");
+      setTimeout(() => { fx.classList.remove("go"); }, 900);
     }
 
     let winToastTimer = null;
@@ -1533,7 +1847,7 @@ function showLoading(on, text){
           <path d="M9 12.5L11.5 15L15.5 10" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           <circle cx="12" cy="12" r="9" stroke="#16a34a" stroke-width="1.5" opacity="0.5"/>
         </svg>
-        <div class="win-title">Deal marked as closed.</div>`;
+        <div class="win-title">🎉 Deal closed — congratulations!</div>`;
       t.classList.remove("hide");
       t.classList.add("show");
       clearTimeout(winToastTimer);
