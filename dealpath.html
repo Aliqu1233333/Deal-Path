@@ -386,7 +386,7 @@
     .cta{
       height: 30px;
       padding: 0 14px;
-      border-radius: 10px;
+      border-radius: 13px;
       border: 0;
       cursor: pointer;
       font-size: 12px;
@@ -616,9 +616,37 @@
 .stage{
   transition: background-color .22s ease, border-color .22s ease, box-shadow .22s ease, transform .18s ease;
 }
-.stage[data-state="active"]{ animation: stagePop .22s ease; }
+.stage[data-state="active"]{ animation: stagePop .42s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .stage[data-state="done"]{ animation: stageDoneIn .20s ease; }
-@keyframes stagePop{ from{ transform: scale(0.985);} to{ transform: scale(1);} }
+@keyframes stagePop{
+  0%   { transform: scale(0.96); }
+  45%  { transform: scale(1.05); }
+  70%  { transform: scale(0.99); }
+  100% { transform: scale(1); }
+}
+
+/* Pulsing emphasis ring on the newly selected active stage */
+.stage[data-state="active"]::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  clip-path: inherit;
+  box-shadow: 0 0 0 0 rgba(23,52,91,0.45);
+  pointer-events:none;
+  animation: activePulse .55s ease-out;
+}
+@keyframes activePulse{
+  0%   { box-shadow: 0 0 0 0 rgba(23,52,91,0.50); }
+  100% { box-shadow: 0 0 0 10px rgba(23,52,91,0); }
+}
+
+/* Press feedback during the click delay */
+.stage-pressed{ animation: stagePress .35s ease !important; }
+@keyframes stagePress{
+  0%   { transform: scale(1); filter: brightness(1); }
+  50%  { transform: scale(0.96); filter: brightness(0.94); }
+  100% { transform: scale(0.97); filter: brightness(0.96); }
+}
 @keyframes stageDoneIn{ from{ transform: scale(0.99); opacity: .92;} to{ transform: scale(1); opacity: 1;} }
 @keyframes chkIn{ from{ transform: scale(0.7); opacity: 0;} 
 
@@ -657,6 +685,41 @@ to{ transform: scale(1); opacity: 1;} }
     }
     .stage-closed-flash{
       animation: closedFlash 1.0s cubic-bezier(0.22,1,0.36,1) forwards !important;
+    }
+
+    /* Completion fill — a solid green wipe pours across each stage in turn,
+       left → right, like the whole path completing in one motion */
+    .stage-fill::after{ display:none; }
+    .stage-fill::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      clip-path: inherit;
+      background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%);
+      transform: scaleX(0);
+      transform-origin: left center;
+      pointer-events:none;
+      z-index: 1;
+      animation: fillPour .32s cubic-bezier(0.4,0,0.2,1) forwards;
+      animation-delay: var(--fill-delay, 0ms);
+    }
+    @keyframes fillPour{
+      from{ transform: scaleX(0); }
+      to  { transform: scaleX(1); }
+    }
+    /* keep the stage label above the fill */
+    .stage-fill .label{ position:relative; z-index: 2; }
+
+    /* final stage gives a little bounce as the fill lands */
+    @keyframes fillBounce{
+      0%   { transform: scale(1);    }
+      45%  { transform: scale(1.06); }
+      75%  { transform: scale(0.98); }
+      100% { transform: scale(1);    }
+    }
+    .stage-fill-last{
+      animation: fillBounce .4s cubic-bezier(0.34,1.56,0.64,1) !important;
+      z-index: 3;
     }
 
     /* Win toast — understated, matches existing toast style */
@@ -976,7 +1039,14 @@ let activeIndex = 0;
         btn.appendChild(labelWrap);
         btn.appendChild(tip);
 
-        btn.addEventListener("click", () => setActive(i, { announce: true, saveRemote: true }));
+        btn.addEventListener("click", () => {
+          if(i === activeIndex) return;
+          // Brief press feedback, then a weighty 0.25s delay before committing
+          btn.classList.remove("stage-pressed");
+          void btn.offsetWidth;
+          btn.classList.add("stage-pressed");
+          setTimeout(() => setActive(i, { announce: true, saveRemote: true }), 350);
+        });
         el.appendChild(btn);
       });
 
@@ -1425,13 +1495,33 @@ function showLoading(on, text){
 
     /* ===== CLOSED CELEBRATION ===== */
     function fireClosedCelebration(){
-      // Flash the closed stage green
       const stages = document.querySelectorAll(".stage");
       const last = stages[stages.length - 1];
-      if(last){ last.classList.remove("stage-closed-flash"); void last.offsetWidth; last.classList.add("stage-closed-flash"); }
+      const n = stages.length;
 
-      // Show understated win toast
-      showWinToast();
+      // Green fill pours across each stage in turn, left → right.
+      const step = 110; // ms between each stage starting to fill
+      stages.forEach((st, idx) => {
+        st.classList.remove("stage-fill");
+        void st.offsetWidth;
+        st.style.setProperty("--fill-delay", (idx * step) + "ms");
+        st.classList.add("stage-fill");
+      });
+
+      // When the fill reaches the final stage, give it a bounce + green flash
+      const finalDelay = (n - 1) * step + 320;
+      setTimeout(() => {
+        if(last){
+          last.classList.remove("stage-fill-last");
+          void last.offsetWidth;
+          last.classList.add("stage-fill-last");
+          last.classList.remove("stage-closed-flash");
+          void last.offsetWidth;
+          last.classList.add("stage-closed-flash");
+        }
+      }, finalDelay);
+
+      setTimeout(showWinToast, finalDelay);
     }
 
     let winToastTimer = null;
